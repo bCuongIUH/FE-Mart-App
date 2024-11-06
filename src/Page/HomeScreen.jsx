@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, FlatList, A
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { AuthContext } from '../untills/context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
+import { getAllPriceProduct } from '../untills/api';
 
 export default function HomeScreen() {
   const { user } = useContext(AuthContext);
@@ -15,44 +16,31 @@ export default function HomeScreen() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const flatListRef = useRef(null);
 
-  const productData = [
-    { id: '1', name: 'Texas Chicken - Quang Trung', image: 'https://example.com/texas-chicken.jpg' },
-    { id: '2', name: 'Trà Sữa MayCha - 41 Nguyễn Văn Linh', image: 'https://example.com/maycha.jpg' },
-    { id: '3', name: 'Bánh Trung Thu', image: 'https://example.com/moon-cake.jpg' },
-    { id: '4', name: 'Coca Cola', image: 'https://example.com/coca-cola.jpg' },
-    { id: '5', name: 'Bánh mì Kebab', image: 'https://example.com/kebab.jpg' },
-    { id: '6', name: 'Trà sữa Gong Cha', image: 'https://example.com/gongcha.jpg' },
-    { id: '7', name: 'Pizza Hut', image: 'https://example.com/pizza-hut.jpg' },
-    { id: '8', name: 'Gà Rán KFC', image: 'https://example.com/kfc.jpg' },
-    { id: '9', name: 'Cà Phê Highlands', image: 'https://example.com/highlands.jpg' },
-    { id: '10', name: 'Lotteria', image: 'https://example.com/lotteria.jpg' },
-    { id: '11', name: 'Texas Chicken - Quang Trung', image: 'https://example.com/texas-chicken.jpg' },
-    { id: '12', name: 'Trà Sữa MayCha - 41 Nguyễn Văn Linh', image: 'https://example.com/maycha.jpg' },
-    { id: '13', name: 'Bánh Trung Thu', image: 'https://example.com/moon-cake.jpg' },
-    { id: '14', name: 'Coca Cola', image: 'https://example.com/coca-cola.jpg' },
-    { id: '15', name: 'Bánh mì Kebab', image: 'https://example.com/kebab.jpg' },
-    { id: '16', name: 'Trà sữa Gong Cha', image: 'https://example.com/gongcha.jpg' },
-    { id: '17', name: 'Pizza Hut', image: 'https://example.com/pizza-hut.jpg' },
-    { id: '18', name: 'Gà Rán KFC', image: 'https://example.com/kfc.jpg' },
-    { id: '19', name: 'Cà Phê Highlands', image: 'https://example.com/highlands.jpg' },
-    { id: '20', name: 'Lotteria', image: 'https://example.com/lotteria.jpg' },
-  ];
 
-  const fetchProducts = useCallback(() => {
-    setLoading(true);
-    try {
-      setProducts(productData);
-      setVisibleProducts(productData.slice(0, 6)); 
-    } catch (error) {
-      Alert.alert("Lỗi", "Không thể tải sản phẩm.");
-    } finally {
-      setLoading(false);
-    }
+//lấy ds sản phẩm
+  useEffect(() => {
+    const fetchProducts = async () => {
+      // setLoading(true); 
+      try {
+        const data = await getAllPriceProduct();
+        if (data.success) {
+          setProducts(data.prices);
+          setVisibleProducts(data.prices.slice(0, 6));
+        } else {
+          Alert.alert("Lỗi", data.message);
+        }
+      } catch (err) {
+        Alert.alert("Lỗi", err.message);
+      } finally {
+        // setLoading(false); 
+      }
+    };
+    fetchProducts();
   }, []);
 
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+
+
+
 
   const handleShowMore = () => {
     const nextProductsCount = visibleProducts.length + 6;
@@ -105,53 +93,61 @@ export default function HomeScreen() {
   );
 
   const handleProductPress = (product) => {
-    navigation.navigate('ProductDetail', { product });
+    navigation.navigate('ProductInfo', { product });
+    console.log(product);
+    
   };
+  const handleProductCart = (product) => {
+    navigation.navigate('ProductCart', { product });
+    console.log("12",product);
+  };
+
 
   const renderItem = ({ item }) => (
     <TouchableOpacity onPress={() => handleProductPress(item)} style={styles.productItem}>
       <Image source={{ uri: item.image }} style={styles.productImage} />
-      <Text style={styles.productName}>{item.name}</Text>
+      <Text style={styles.productName}>{item.productName}</Text>
       <TouchableOpacity style={styles.buyButton}>
-        <Text style={styles.buyButtonText}>Mua ngay</Text>
+        <Text onPress={()=> handleProductCart(item)} style={styles.buyButtonText}>Mua ngay</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FFD700" />
-      </View>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <View style={styles.loadingContainer}>
+  //       <ActivityIndicator size="large" color="#FFD700" />
+  //     </View>
+  //   );
+  // }
 
   const handleScroll = (event) => {
     const scrollY = event.nativeEvent.contentOffset.y;
-    setShowScrollTop(scrollY > 300);
+    setShowScrollTop(scrollY > 600);
   };
 
   return (
     <View style={styles.container}>
       <FlatList
-        ref={flatListRef}
-        data={visibleProducts}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.columnWrapper}
-        ListHeaderComponent={renderHeader}
-        contentContainerStyle={styles.listContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        ListFooterComponent={() => (
-          showMore && (
-            <TouchableOpacity style={styles.showMoreButton} onPress={handleShowMore}>
-              <Text style={styles.showMoreButtonText}>Xem thêm</Text>
-            </TouchableOpacity>
-          )
-        )}
-        onScroll={handleScroll}
-      />
+          ref={flatListRef}
+          data={visibleProducts}
+          renderItem={renderItem}
+          keyExtractor={(item, index) => `${item.productId || index}-${index}`}
+          numColumns={2}
+          columnWrapperStyle={styles.columnWrapper}
+          ListHeaderComponent={renderHeader}
+          contentContainerStyle={styles.listContent}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          ListFooterComponent={() => (
+            showMore && (
+              <TouchableOpacity style={styles.showMoreButton} onPress={handleShowMore}>
+                <Text style={styles.showMoreButtonText}>Xem thêm</Text>
+              </TouchableOpacity>
+            )
+          )}
+          onScroll={handleScroll}
+        />
+
 
       {showScrollTop && (
         <TouchableOpacity
@@ -269,9 +265,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginVertical: 8,
+
   },
   buyButton: {
-    backgroundColor: '#FFD700',
+    backgroundColor: '#D8BFD8',
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 20,
@@ -284,7 +281,7 @@ const styles = StyleSheet.create({
   showMoreButton: {
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: '#FFD700',
+    backgroundColor: '#F2E8F2',
     borderRadius: 20,
     alignSelf: 'center',
     marginVertical: 20,
@@ -296,10 +293,10 @@ const styles = StyleSheet.create({
   },
   scrollTopButton: {
     position: 'absolute',
-    right: 20,
-    bottom: 20,
-    backgroundColor: '#FFD700',
-    padding: 15,
+    right: 15,
+    bottom: 15,
+    backgroundColor: '#F2E8F2',
+    padding: 10,
     borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',

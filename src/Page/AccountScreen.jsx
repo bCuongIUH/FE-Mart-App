@@ -1,51 +1,174 @@
 import React, { useContext } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { AuthContext } from '../untills/context/AuthContext'; // Import AuthContext
-import { useNavigation } from '@react-navigation/native'; // Sử dụng để điều hướng
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
+import { AuthContext } from '../untills/context/AuthContext';
+import { useNavigation } from '@react-navigation/native';
 
 export default function AccountScreen() {
-  const { logout } = useContext(AuthContext); 
+  const { user, logout } = useContext(AuthContext);
   const navigation = useNavigation();
-
-  const handleLogout = async () => {
-    try {
-      await logout(); 
-      Alert.alert("Đăng xuất thành công", "Bạn đã đăng xuất khỏi tài khoản.");
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Welcome' }], 
-      });
-    } catch (error) {
-      Alert.alert("Lỗi", "Đăng xuất không thành công. Vui lòng thử lại.");
-    }
+  const handleLogout = () => {
+    Alert.alert(
+      "Đăng xuất",
+      "Bạn có chắc muốn đăng xuất?",
+      [
+        { text: "Hủy", style: "cancel" },
+        { 
+          text: "Đăng xuất", 
+          onPress: () => {
+            logout();
+            navigation.reset({
+              index: 0,
+              routes: [{ name: "Welcome" }],
+            });
+          } 
+        }
+      ]
+    );
   };
 
+  const handleEditProfile = () => {
+    // Điều hướng hoặc xử lý khi người dùng nhấn vào chỉnh sửa
+    navigation.navigate('EditProfile'); 
+  };
+
+
   return (
-    <View style={styles.centeredView}>
-      <Text>Tài Khoản</Text>
+    <ScrollView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+          <Image  source={require('../../assets/images/man-avatar.jpg')} style={styles.avatar} />
+          <Text style={styles.name}>{user?.fullName || 'Người dùng'}</Text>
+          <Text style={styles.phone}>{user?.phoneNumber}</Text>
+          <View style={styles.memberBadge}>
+            <Text style={styles.memberText}>THÀNH VIÊN</Text>
+          </View>
+          {/* Nút chỉnh sửa */}
+          <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
+            <FontAwesome name="edit" size={24} color="#333" />
+          </TouchableOpacity>
+        </View>
+
+      {/* Menu Items */}
+      <View style={styles.menuContainer}>
+        <MenuItem icon="money" label="Quản lý chi tiêu" isNew />
+        <MenuItem icon="calendar" label="Kế hoạch mua sắm" isNew />
+        {/* <MenuItem icon="wallet" label="Ví trả sau – bePaylater" isNew /> */}
+        {/* <MenuItem icon="home" label="Home PayLater" isNew /> */}
+        {/* <MenuItem icon="link" label="Liên kết tài khoản" /> */}
+        {/* <MenuItem icon="car" label="Cài đặt chuyến đi" /> */}
+        {/* <MenuItem icon="shield" label="Bảo hiểm OPES" /> */}
+        <MenuItem icon="tag" label="Khuyến mãi" />
+        {/* <MenuItem icon="piggy-bank" label="Gói tiết kiệm" /> */}
+        <MenuItem icon="gift" label="Giới thiệu & Nhận ưu đãi" />
+      </View>
+
+      {/* Logout Button */}
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutButtonText}>Đăng Xuất</Text>
+        <Text style={styles.logoutButtonText}>Đăng xuất</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
+  );
+}
+
+function MenuItem({ icon, label, isNew }) {
+  return (
+    <TouchableOpacity style={styles.menuItem}>
+      <View style={styles.menuItemContent}>
+        <FontAwesome name={icon} size={20} color="#555" style={styles.menuIcon} />
+        <Text style={styles.menuText}>{label}</Text>
+      </View>
+      {isNew && <Text style={styles.newBadge}>Mới</Text>}
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  centeredView: {
+  container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#FFF',
+  },
+  header: {
+    backgroundColor: '#D8BFD8',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  editButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 10,
+  },
+  name: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  phone: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 5,
+  },
+  memberBadge: {
+    backgroundColor: '#D4AF37',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 15,
+  },
+  memberText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+  },
+  menuContainer: {
+    paddingVertical: 20,
+    paddingHorizontal: 15,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
+  },
+  menuItemContent: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  logoutButton: {
-    marginTop: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: '#FF6347',
+  menuIcon: {
+    marginRight: 15,
+  },
+  menuText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  newBadge: {
+    backgroundColor: '#FF4500',
+    color: '#FFF',
+    fontSize: 12,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderRadius: 5,
+    overflow: 'hidden',
+  },
+  logoutButton: {
+    top : 280,
+    backgroundColor: "#A9A9A9",
+    paddingVertical: 12,
+    alignItems: 'center',
+    margin: 20,
+    borderRadius: 8,
+    bottom: 20,
+ 
   },
   logoutButtonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+    color: '#FFF',
     fontSize: 16,
+    fontWeight: 'bold',
   },
 });

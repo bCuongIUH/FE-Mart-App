@@ -9,6 +9,9 @@ import HomePage from './src/Page/HomePage';
 import OTPVerificationScreen from './src/Home/OTPVerificationScreen';
 import RequireAuth from './src/untills/context/AuthenticatedRouter';
 import { AuthProvider } from './src/untills/context/AuthContext';
+import ProductInfo from './src/Product/ProductInfo';
+import ProductCart from './src/Product/ProductCart';
+import CartScreen from './src/Page/CartScreen';
 
 
 
@@ -26,9 +29,11 @@ export default function App() {
        <Stack.Screen name='Login' options={{headerShown: false}} component={LoginScreen} />
        <Stack.Screen name='SignUp' options={{headerShown: false}} component={SignUpScreen} />
        <Stack.Screen name='OTP' options={{headerShown: false}} component={OTPVerificationScreen} />
-
-         
-       <Stack.Screen name="HomePage" options={{ headerShown: false }}>
+       <Stack.Screen name='ProductInfo' options={{headerShown: false}} component={ProductInfo} />
+       <Stack.Screen name='ProductCart' options={{headerShown: false}} component={ProductCart} />
+       <Stack.Screen name='CartScreen' options={{headerShown: false}} component={CartScreen} />
+     
+       <Stack.Screen name='HomePage' options={{ headerShown: false }}>
           {() => (
             <RequireAuth>
               <HomePage />

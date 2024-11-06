@@ -7,27 +7,16 @@ import HomeScreen from './HomeScreen';
 import CartScreen from './CartScreen';
 import ActivityScreen from './ActivityScreen';
 import AccountScreen from './AccountScreen';
-import { AuthContext } from '../untills/context/AuthContext';
+
 
 
 const Tab = createBottomTabNavigator();
 
-export default function HomePage() {
-  // const [userName, setUserName] = useState('');
-  const { user } = useContext(AuthContext);
-
-  useEffect(() => {
-    console.log(user); 
-  }, [user]);
-
-
-// console.log(user._id);
-
- 
+export default function HomePage() { 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
-        {/* Header với lời chào */}
+        {/* Header  */}
         {/* <View style={styles.header}>
           <Text style={styles.welcomeText}> Chào mừng, {user ? user.fullName : "Guest"}</Text>
           <TextInput
@@ -49,7 +38,7 @@ export default function HomePage() {
 
               return <AntDesign name={iconName} size={size} color={color} />;
             },
-            tabBarActiveTintColor: '#FBBF24',
+            tabBarActiveTintColor: '#B391B3',
             tabBarInactiveTintColor: 'gray',
             headerShown: false,
           })}

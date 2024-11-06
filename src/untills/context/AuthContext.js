@@ -55,7 +55,6 @@
 //     </AuthContext.Provider>
 //   );
 // };
-
 import React, { createContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -64,9 +63,7 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
 
-
     useEffect(() => {
-      // Tải user từ AsyncStorage khi ứng dụng khởi động
       const loadUser = async () => {
         const storedUser = await AsyncStorage.getItem('user');
         if (storedUser) {
@@ -78,8 +75,8 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (userData) => {
       if (userData) {
-        setUser(userData); // Cập nhật state `user`
-        await AsyncStorage.setItem('user', JSON.stringify(userData)); // Lưu `user` vào AsyncStorage
+        setUser(userData);
+        await AsyncStorage.setItem('user', JSON.stringify(userData));
       }
     };
 
@@ -94,3 +91,4 @@ export const AuthProvider = ({ children }) => {
         </AuthContext.Provider>
     );
 };
+
