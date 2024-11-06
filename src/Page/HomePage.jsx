@@ -1,72 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { StyleSheet, Text, View, TextInput, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// import AsyncStorage from '@react-native-async-storage/async-storage';
 import AntDesign from '@expo/vector-icons/AntDesign';
-// import { AuthContext } from '../untills/context/AuthContext';
+import HomeScreen from './HomeScreen';
+import CartScreen from './CartScreen';
+import ActivityScreen from './ActivityScreen';
+import AccountScreen from './AccountScreen';
+import { AuthContext } from '../untills/context/AuthContext';
+
 
 const Tab = createBottomTabNavigator();
-// const {user} = useContext(AuthContext)
-
-// console.log(user)
-function HomeScreen() {
-  return (
-    <View style={styles.centeredView}>
-      <Text>Trang Chủ</Text>
-    </View>
-  );
-}
-
-function CartScreen() {
-  return (
-    <View style={styles.centeredView}>
-      <Text>Giỏ Hàng</Text>
-    </View>
-  );
-}
-
-function ActivityScreen() {
-  return (
-    <View style={styles.centeredView}>
-      <Text>Hoạt Động</Text>
-    </View>
-  );
-}
-
-function AccountScreen() {
-  return (
-    <View style={styles.centeredView}>
-      <Text>Tài Khoản</Text>
-    </View>
-  );
-}
 
 export default function HomePage() {
-  const [userName, setUserName] = useState('');
+  // const [userName, setUserName] = useState('');
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
-    const fetchUserName = async () => {
-      const storedUser = await AsyncStorage.getItem('user');
-      if (storedUser) {
-        const { fullName } = JSON.parse(storedUser);
-        setUserName(fullName);
-      }
-    };
-    fetchUserName();
-  }, []);
+    console.log(user); 
+  }, [user]);
 
+
+// console.log(user._id);
+
+ 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
         {/* Header với lời chào */}
-        <View style={styles.header}>
-          <Text style={styles.welcomeText}>Chào mừng, {userName}</Text>
+        {/* <View style={styles.header}>
+          <Text style={styles.welcomeText}> Chào mừng, {user ? user.fullName : "Guest"}</Text>
           <TextInput
             style={styles.searchInput}
             placeholder="Tìm kiếm"
             placeholderTextColor="#A9A9A9"
           />
-        </View>
+        </View> */}
 
         {/* Tabs điều hướng */}
         <Tab.Navigator
@@ -119,10 +88,5 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     color: '#4B5563',
-  },
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });

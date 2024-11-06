@@ -16,6 +16,7 @@
     "axios": "^1.7.7",
     "crypto-js": "^4.2.0",
     "expo": "~51.0.28",
+    "expo-image": "~1.13.0",
     "expo-status-bar": "~1.12.1",
     "fe-mart-app": "file:",
     "react": "18.2.0",

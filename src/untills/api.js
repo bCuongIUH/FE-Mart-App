@@ -1,7 +1,7 @@
 import axios from "axios";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = "http://192.168.1.6:5000/api";
+const API_URL = "http://192.168.1.62:5000/api";
 
 // Hàm để tạo cấu hình axios với token
 const getConfig = async () => {

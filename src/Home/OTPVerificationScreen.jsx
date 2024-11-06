@@ -1,20 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, StatusBar, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { resendOTP, verifyOTP } from '../untills/api';
+import { AuthContext } from '../untills/context/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function OTPVerificationScreen({ route, navigation }) {
   const [otp, setOtp] = useState('');
   const [timer, setTimer] = useState(60);
   const [isResendDisabled, setIsResendDisabled] = useState(true);
+  const [isInputDisabled, setIsInputDisabled] = useState(false); // Trạng thái vô hiệu hóa nhập mã
   const { email } = route.params;
+  const { login } = useContext(AuthContext);
 
   useEffect(() => {
     let countdown;
     if (timer > 0) {
       countdown = setInterval(() => setTimer(prev => prev - 1), 1000);
     } else {
-      setIsResendDisabled(false); 
+      setIsResendDisabled(false);
+      setIsInputDisabled(true); // Vô hiệu hóa nhập mã sau khi hết thời gian
     }
 
     return () => clearInterval(countdown);
@@ -23,9 +28,10 @@ export default function OTPVerificationScreen({ route, navigation }) {
   const handleResendOTP = async () => {
     setTimer(60); // Đặt lại thời gian đếm ngược
     setIsResendDisabled(true);
+    setIsInputDisabled(false); // Cho phép nhập mã lại sau khi gửi mã mới
+
     try {
       await resendOTP(email); // Gọi API gửi lại OTP
-    //   Alert.alert("OTP Sent", "A new OTP has been sent to your email.");
     } catch (error) {
       Alert.alert("Error", "Failed to resend OTP. Please try again.");
     }
@@ -37,7 +43,7 @@ export default function OTPVerificationScreen({ route, navigation }) {
         const response = await verifyOTP({ email, otp });
         if (response.status === 200) {
           Alert.alert("Success", "Xác thực thành công!");
-          navigation.navigate("HomePage");
+          navigation.navigate("Login");
         }
       } catch (error) {
         Alert.alert("Invalid OTP", error.response?.data?.message || "The OTP entered is incorrect.");
@@ -56,7 +62,7 @@ export default function OTPVerificationScreen({ route, navigation }) {
         <Text style={styles.subtitle}>Mã OTP đã được gửi qua email của bạn!</Text>
 
         <TextInput
-          style={styles.otpInput}
+          style={[styles.otpInput, isInputDisabled && styles.disabledInput]} // Thêm style khi vô hiệu hóa
           value={otp}
           onChangeText={setOtp}
           maxLength={6}
@@ -64,9 +70,10 @@ export default function OTPVerificationScreen({ route, navigation }) {
           placeholder="Nhập OTP"
           placeholderTextColor="#A9A9A9"
           textAlign="center"
+          editable={!isInputDisabled} // Chỉ cho phép nhập khi không bị vô hiệu hóa
         />
 
-        <TouchableOpacity style={styles.verifyButton} onPress={handleVerifyOTP}>
+        <TouchableOpacity style={styles.verifyButton} onPress={handleVerifyOTP} disabled={isInputDisabled}>
           <Text style={styles.verifyButtonText}>Xác nhận</Text>
         </TouchableOpacity>
 
@@ -116,6 +123,10 @@ const styles = StyleSheet.create({
     color: '#4B5563',
     marginBottom: 20,
     backgroundColor: '#F3F4F6',
+  },
+  disabledInput: {
+    backgroundColor: '#E0E0E0', // Đổi màu khi vô hiệu hóa
+    color: '#A9A9A9',
   },
   verifyButton: {
     width: '80%',

@@ -1,35 +1,42 @@
 import { StyleSheet, Text, View, Image, TouchableOpacity, TextInput, StatusBar, Keyboard, TouchableWithoutFeedback, Alert, ActivityIndicator } from 'react-native';
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { postLogin } from '../untills/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AuthContext } from '../untills/context/AuthContext';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false); // Trạng thái loading
-
+  const [loading, setLoading] = useState(false); 
+  const { login } = useContext(AuthContext); 
+  
   // Hàm xử lý đăng nhập
   const handleLogin = async () => {
-    setLoading(true); // Bắt đầu hiển thị loader khi bắt đầu đăng nhập
+    setLoading(true);
     try {
-      const response = await postLogin({ email, password });
-      if (response.status === 200) {
-        // const data = response.data;
-        const token = response.data.token;
-        await AsyncStorage.setItem('token', token);
-        // login(data.user); 
-        navigation.navigate("HomePage"); // Chuyển trang trực tiếp
-      } else {
-        Alert.alert("Đăng nhập thất bại", "Email hoặc mật khẩu sai. Vui lòng thử lại.");
-      }
+        const response = await postLogin({ email, password });
+        if (response.status === 200) {
+            const token = response.data.token;
+            const userData = response.data.user;
+
+            // Lưu token và user vào AsyncStorage
+            await AsyncStorage.setItem('token', token);
+
+            // Gọi hàm login từ AuthContext để lưu user vào context
+            login(userData);
+
+            navigation.navigate("HomePage");
+        } else {
+            Alert.alert("Đăng nhập thất bại", "Email hoặc mật khẩu sai. Vui lòng thử lại.");
+        }
     } catch (error) {
-      Alert.alert("Đăng nhập thất bại", "Email hoặc mật khẩu sai. Vui lòng thử lại.");
+        Alert.alert("Đăng nhập thất bại", "Có lỗi xảy ra. Vui lòng thử lại.");
     } finally {
-      setLoading(false); // Tắt loader sau khi xử lý xong
+        setLoading(false);
     }
-  };
+};
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>

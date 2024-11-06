@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { postRegister } from '../untills/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SignUpScreen({ navigation }) {
   const [fullName, setFullName] = useState(''); // Thêm state cho họ và tên
@@ -27,9 +28,11 @@ export default function SignUpScreen({ navigation }) {
   
     try {
       const response = await postRegister(data);
-      console.log("API Response Status:", response.status);
+      // console.log("API Response Status:", response.status);
   
       if (response.status === 200 || response.status === 201) {
+      //   await AsyncStorage.setItem('tempEmail', email);
+      // await AsyncStorage.setItem('tempPassword', password);
         navigation.navigate("OTP", { email });
       } else {
         Alert.alert("Registration Failed", response.data.message || "Please try again.");

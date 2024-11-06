@@ -8,6 +8,7 @@ import SignUpScreen from './src/Home/SignUpScreen';
 import HomePage from './src/Page/HomePage';
 import OTPVerificationScreen from './src/Home/OTPVerificationScreen';
 import RequireAuth from './src/untills/context/AuthenticatedRouter';
+import { AuthProvider } from './src/untills/context/AuthContext';
 
 
 
@@ -16,9 +17,10 @@ const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
+    <AuthProvider> 
     <NavigationContainer>
       <Stack.Navigator initialRouteName='Welcome'>
-        {/* <AuthProvider> */}
+    
        <Stack.Screen name='Home' options={{headerShown: false}} component={HomeScreen} />
        <Stack.Screen name='Welcome' options={{headerShown: false}} component={WelcomScreen} />
        <Stack.Screen name='Login' options={{headerShown: false}} component={LoginScreen} />
@@ -34,9 +36,9 @@ export default function App() {
           )}
         </Stack.Screen>
 
-        {/* </AuthProvider> */}
       </Stack.Navigator>
     </NavigationContainer>
+    </AuthProvider>
   );
 }
 
