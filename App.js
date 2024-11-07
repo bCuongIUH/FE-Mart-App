@@ -12,6 +12,10 @@ import { AuthProvider } from './src/untills/context/AuthContext';
 import ProductInfo from './src/Product/ProductInfo';
 import ProductCart from './src/Product/ProductCart';
 import CartScreen from './src/Page/CartScreen';
+import CheckoutScreen from './src/Cart/CheckoutScreen';
+import DiscountComponent from './src/Discount/DiscountComponent';
+import PaymentMethodScreen from './src/Payment/PaymentMethodScreen';
+import EditProfileScreen from './src/User/EditProfileScreen';
 
 
 
@@ -32,7 +36,10 @@ export default function App() {
        <Stack.Screen name='ProductInfo' options={{headerShown: false}} component={ProductInfo} />
        <Stack.Screen name='ProductCart' options={{headerShown: false}} component={ProductCart} />
        <Stack.Screen name='CartScreen' options={{headerShown: false}} component={CartScreen} />
-     
+       <Stack.Screen name='CheckoutScreen' options={{headerShown: false}} component={CheckoutScreen} />
+       <Stack.Screen name='DiscountScreen' options={{headerShown: false}} component={DiscountComponent} />
+       <Stack.Screen name='PaymentMethodScreen' options={{headerShown: false}} component={PaymentMethodScreen} />
+       <Stack.Screen name='EditProfileScreen' options={{headerShown: false}} component={EditProfileScreen} />
        <Stack.Screen name='HomePage' options={{ headerShown: false }}>
           {() => (
             <RequireAuth>

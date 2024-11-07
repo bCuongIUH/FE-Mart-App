@@ -60,7 +60,7 @@ export default function SignUpScreen({ navigation }) {
 
             <View style={styles.imageContainer}>
               <Image 
-                source={require('../../assets/images/login.png')}
+                source={require('../../assets/images/register.png')}
                 style={styles.imageStyle}
               />
             </View>
@@ -113,7 +113,7 @@ export default function SignUpScreen({ navigation }) {
             />
 
             <TouchableOpacity style={styles.loginButton} onPress={handleSignUp}>
-              <Text style={styles.loginButtonText}>Đăng kí</Text>
+              <Text style={styles.loginButtonText}>Đăng ký</Text>
             </TouchableOpacity>
 
             <View style={styles.footerContainer}>

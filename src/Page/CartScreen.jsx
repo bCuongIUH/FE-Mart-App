@@ -20,7 +20,9 @@ export default function CartScreen() {
       ]);
     }
   }, [productId]);
-   
+
+ 
+  
 
   // Chuyển chuỗi thành tiền VNĐ
   const formatCurrency = (value) => `${value.toLocaleString('vi-VN')} VNĐ`;
@@ -40,9 +42,12 @@ export default function CartScreen() {
 
   // Xử lý thanh toán
   const handleCheckout = () => {
-    console.log('Thanh toán các sản phẩm:', selectedItems);
+    // Lọc ra các sản phẩm đã chọn từ products dựa trên selectedItems
+    const selectedProducts = products.filter(product => selectedItems.includes(product.productId));
+    
+    console.log('Các sản phẩm thanh toán:', selectedProducts);
+    navigation.navigate('CheckoutScreen', { selectedProducts });
   };
-
   const renderProduct = ({ item }) => (
     <View style={styles.cartItem}>
       <Image source={{ uri: item.image }} style={styles.productImage} />
@@ -97,7 +102,7 @@ const totalAmount = selectedItems.reduce((sum, itemId) => {
             <Text style={styles.totalAmountText}>Tổng: {formatCurrency(totalAmount)}</Text>
           </View>
           <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
-            <Text style={styles.checkoutButtonText}>Thanh toán</Text>
+            <Text style={styles.checkoutButtonText}>Tiếp tục</Text>
           </TouchableOpacity>
         </View>
       )}

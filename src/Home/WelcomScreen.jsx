@@ -21,7 +21,7 @@ export default function WelcomeScreen({ navigation }) {
       {/* Sign Up Button */}
       <View style={styles.spacing}>
         <TouchableOpacity style={styles.signUpButton} onPress={() => navigation.navigate('SignUp')}>
-          <Text style={styles.signUpButtonText}>Đăng kí</Text>
+          <Text style={styles.signUpButtonText}>Đăng ký</Text>
         </TouchableOpacity>
       </View>
 

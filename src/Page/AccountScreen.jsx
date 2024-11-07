@@ -1,12 +1,40 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { AuthContext } from '../untills/context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
+import { getAllCustomers } from '../untills/api';
 
 export default function AccountScreen() {
   const { user, logout } = useContext(AuthContext);
   const navigation = useNavigation();
+  const [customer, setCustomer] = useState([]);
+
+
+  // Lấy thông tin sản phẩm và khách hàng
+  useEffect(() => {
+    const fetchCustomer = async () => {
+      try {
+      
+        const customerData = await getAllCustomers();
+        
+        // Tìm và lưu toàn bộ thông tin `Customer` có `CustomerId` trùng với `user._id`
+        const currentCustomer = customerData.find(cust => cust.CustomerId === user._id);
+        if (currentCustomer) {
+          setCustomer(currentCustomer); 
+        } else {
+          Alert.alert("Không tìm thấy khách hàng", "Thông tin khách hàng chưa có trong hệ thống.");
+        }
+      } catch (err) {
+        // Alert.alert("Lỗi", err.message);
+      }
+    };
+
+    fetchCustomer();
+  }, [user]);
+
+
+  //nút đăng xuất
   const handleLogout = () => {
     Alert.alert(
       "Đăng xuất",
@@ -27,10 +55,11 @@ export default function AccountScreen() {
     );
   };
 
+  //nút edit
   const handleEditProfile = () => {
-    // Điều hướng hoặc xử lý khi người dùng nhấn vào chỉnh sửa
-    navigation.navigate('EditProfile'); 
+    navigation.navigate('EditProfileScreen', { customer });
   };
+  
 
 
   return (
@@ -38,7 +67,7 @@ export default function AccountScreen() {
       {/* Header */}
       <View style={styles.header}>
           <Image  source={require('../../assets/images/man-avatar.jpg')} style={styles.avatar} />
-          <Text style={styles.name}>{user?.fullName || 'Người dùng'}</Text>
+          <Text style={styles.name}>{customer ? customer.fullName : "Người dùng"} </Text>
           <Text style={styles.phone}>{user?.phoneNumber}</Text>
           <View style={styles.memberBadge}>
             <Text style={styles.memberText}>THÀNH VIÊN</Text>
@@ -108,6 +137,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
+    margin: 5,
   },
   phone: {
     fontSize: 14,

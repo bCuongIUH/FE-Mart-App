@@ -17,6 +17,12 @@ export default function ProductInfo({ route, navigation }) {
     setPrice(unit.price); 
   };
 
+  //kiểm tra dữ liệu sản phẩm lỗi
+  if (!product || !product.units) {
+    console.error("Dữ liệu sản phẩm không hợp lệ:", product);
+    return <Text>Thông tin sản phẩm không có sẵn</Text>;
+  }
+  
   const handleQuantityChange = (type) => {
     const newQuantity = type === 'increase' ? quantity + 1 : quantity > 1 ? quantity - 1 : 1;
     setQuantity(newQuantity);
@@ -41,7 +47,7 @@ export default function ProductInfo({ route, navigation }) {
   
   return (
     <View style={styles.container}>
-      {/* Top Half - Product Image */}
+      {/* image */}
       <View style={styles.imageContainer}>
         <Image source={{ uri: product.image }} style={styles.productImage} />
 
@@ -52,8 +58,15 @@ export default function ProductInfo({ route, navigation }) {
 
       {/* tiêu đề chính của sp */}
       <View style={styles.detailsContainer}>
-        <Text style={styles.productTitle}>{product.productName}</Text>
-        <Text style={styles.productCategory}>{product.category}</Text>
+      <Text style={styles.productTitle}>{product.productName}</Text>
+        <View style={styles.productInfoRow}>
+          <Text style={styles.productCategory}>{product.category}</Text>
+          <Text style={[ styles.unitStockText, { color: selectedUnit.quantity > 0 ? '#888' : 'red' , fontWeight: 'bold'}]}
+            >
+              {selectedUnit.quantity > 0 ? `Số lượng: ${selectedUnit.quantity}` : "Hết hàng"}
+            </Text>
+
+        </View>
 
         {/* Rating icon */}
         <View style={styles.ratingRow}>
@@ -147,11 +160,12 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 30,
 
   },
-  
-  productTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
+
+  productTitle: { fontSize: 22, fontWeight: 'bold', marginVertical: 8 },
+  productInfoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 },
+  productCategory: { fontSize: 16, color: '#888' },
+  unitStockText: { fontSize: 16, color: '#888' },
+
   productCategory: {
     fontSize: 16,
     color: '#666',
@@ -169,6 +183,7 @@ const styles = StyleSheet.create({
   soldText: {
     fontSize: 14,
     color: '#888',
+    fontStyle: 'italic',
   },
   descriptionContainer: {
     marginVertical: 10,

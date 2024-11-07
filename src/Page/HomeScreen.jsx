@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, FlatList, A
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { AuthContext } from '../untills/context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
-import { getAllPriceProduct } from '../untills/api';
+import { getAllCustomers, getAllPriceProduct } from '../untills/api';
+
 
 export default function HomeScreen() {
   const { user } = useContext(AuthContext);
@@ -15,36 +16,45 @@ export default function HomeScreen() {
   const [showMore, setShowMore] = useState(true);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const flatListRef = useRef(null);
-
-
-//lấy ds sản phẩm
-  useEffect(() => {
-    const fetchProducts = async () => {
-      // setLoading(true); 
+  const [customer, setCustomer] = useState([]);
+ 
+   // Lấy thông tin sản phẩm và khách hàng
+   useEffect(() => {
+    const fetchProductsAndCustomer = async () => {
       try {
-        const data = await getAllPriceProduct();
-        if (data.success) {
-          setProducts(data.prices);
-          setVisibleProducts(data.prices.slice(0, 6));
+        const productData = await getAllPriceProduct();
+        if (productData.success) {
+          setProducts(productData.prices);
+          setVisibleProducts(productData.prices.slice(0, 6));
         } else {
-          Alert.alert("Lỗi", data.message);
+          Alert.alert("Lỗi", productData.message);
+        }
+
+        const customerData = await getAllCustomers();
+        
+        // Tìm và lưu toàn bộ thông tin `Customer` có `CustomerId` trùng với `user._id`
+        const currentCustomer = customerData.find(cust => cust.CustomerId === user._id);
+        if (currentCustomer) {
+          setCustomer(currentCustomer); 
+        } else {
+          Alert.alert("Không tìm thấy khách hàng", "Thông tin khách hàng chưa có trong hệ thống.");
         }
       } catch (err) {
-        Alert.alert("Lỗi", err.message);
-      } finally {
-        // setLoading(false); 
+        // Alert.alert("Lỗi", err.message);
       }
     };
-    fetchProducts();
-  }, []);
+
+    fetchProductsAndCustomer();
+  }, [user]);
 
 
-
-
+console.log(customer.phoneNumber);
+console.log('====================================');
+console.log(user);
 
   const handleShowMore = () => {
     const nextProductsCount = visibleProducts.length + 6;
-    setVisibleProducts(products.slice(0, nextProductsCount)); 
+    setVisibleProducts(products.slice(0, nextProductsCount));
     if (nextProductsCount >= products.length) {
       setShowMore(false);
     }
@@ -59,7 +69,7 @@ export default function HomeScreen() {
   const renderHeader = () => (
     <>
       <View style={styles.header}>
-        <Text style={styles.greeting}>Chào, {user ? user.fullName : "Người dùng"} ✨</Text>
+      <Text style={styles.greeting}>Chào, {customer ? customer.fullName : "Người dùng"} ✨</Text>
       </View>
       <View style={styles.searchContainer}>
         <FontAwesome name="search" size={20} color="#A9A9A9" />
@@ -74,12 +84,12 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
       <View style={styles.servicesContainer}>
-        <ServiceIcon name="Đồ gia dụng" icon="https://example.com/food-icon.png" />
-        <ServiceIcon name="Nội thất" icon="https://example.com/delivery-icon.png" />
-        <ServiceIcon name="Hoa quả" icon="https://example.com/bike-icon.png" />
-        <ServiceIcon name="Lương thực" icon="https://example.com/car-icon.png" />
-        <ServiceIcon name="Đồ uống đóng chai" icon="https://example.com/taxi-icon.png" />
-        <ServiceIcon name="Mỹ phẩm" icon="https://example.com/savings-icon.png" />
+        <ServiceIcon name="Đồ gia dụng" icon={require('../../assets/images/do-gia-dung.png')} />
+        <ServiceIcon name="Dụng cụ học tập" icon={require('../../assets/images/dung-cu-hoc-tap.png')} />
+        <ServiceIcon name="Hoa quả" icon={require('../../assets/images/hoa-qua.png')} />
+        <ServiceIcon name="Đồ hộp" icon={require('../../assets/images/do-hop.png')} />
+        <ServiceIcon name="Đồ uống đóng chai"  icon={require('../../assets/images/do-uong.png')} />
+        <ServiceIcon name="Mỹ phẩm" icon={require('../../assets/images/my-pham.png')} />
       </View>
       <Text style={styles.sectionTitle}>Sản phẩm dành cho bạn</Text>
     </>
@@ -87,39 +97,28 @@ export default function HomeScreen() {
 
   const ServiceIcon = ({ name, icon }) => (
     <TouchableOpacity style={styles.serviceIconContainer}>
-      <Image source={{ uri: icon }} style={styles.serviceIcon} />
+      <Image source={typeof icon === 'string' ? { uri: icon } : icon} style={styles.serviceIcon} />
       <Text style={styles.serviceText}>{name}</Text>
     </TouchableOpacity>
   );
 
   const handleProductPress = (product) => {
     navigation.navigate('ProductInfo', { product });
-    console.log(product);
-    
-  };
-  const handleProductCart = (product) => {
-    navigation.navigate('ProductCart', { product });
-    console.log("12",product);
   };
 
+  const handleProductCart = (product) => {
+    navigation.navigate('ProductCart', { product });
+  };
 
   const renderItem = ({ item }) => (
     <TouchableOpacity onPress={() => handleProductPress(item)} style={styles.productItem}>
       <Image source={{ uri: item.image }} style={styles.productImage} />
       <Text style={styles.productName}>{item.productName}</Text>
       <TouchableOpacity style={styles.buyButton}>
-        <Text onPress={()=> handleProductCart(item)} style={styles.buyButtonText}>Mua ngay</Text>
+        <Text onPress={() => handleProductCart(item)} style={styles.buyButtonText}>Mua ngay</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
-
-  // if (loading) {
-  //   return (
-  //     <View style={styles.loadingContainer}>
-  //       <ActivityIndicator size="large" color="#FFD700" />
-  //     </View>
-  //   );
-  // }
 
   const handleScroll = (event) => {
     const scrollY = event.nativeEvent.contentOffset.y;
@@ -129,25 +128,24 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <FlatList
-          ref={flatListRef}
-          data={visibleProducts}
-          renderItem={renderItem}
-          keyExtractor={(item, index) => `${item.productId || index}-${index}`}
-          numColumns={2}
-          columnWrapperStyle={styles.columnWrapper}
-          ListHeaderComponent={renderHeader}
-          contentContainerStyle={styles.listContent}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-          ListFooterComponent={() => (
-            showMore && (
-              <TouchableOpacity style={styles.showMoreButton} onPress={handleShowMore}>
-                <Text style={styles.showMoreButtonText}>Xem thêm</Text>
-              </TouchableOpacity>
-            )
-          )}
-          onScroll={handleScroll}
-        />
-
+        ref={flatListRef}
+        data={visibleProducts}
+        renderItem={renderItem}
+        keyExtractor={(item, index) => `${item.productId || index}-${index}`}
+        numColumns={2}
+        columnWrapperStyle={styles.columnWrapper}
+        ListHeaderComponent={renderHeader}
+        contentContainerStyle={styles.listContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        ListFooterComponent={() => (
+          showMore && (
+            <TouchableOpacity style={styles.showMoreButton} onPress={handleShowMore}>
+              <Text style={styles.showMoreButtonText}>Xem thêm</Text>
+            </TouchableOpacity>
+          )
+        )}
+        onScroll={handleScroll}
+      />
 
       {showScrollTop && (
         <TouchableOpacity
@@ -223,6 +221,10 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     marginBottom: 5,
+    borderRadius : 15,  
+    borderWidth: 1,      
+    borderColor: '#888',  
+
   },
   serviceText: {
     textAlign: 'center',
@@ -265,7 +267,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginVertical: 8,
-
   },
   buyButton: {
     backgroundColor: '#D8BFD8',

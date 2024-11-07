@@ -93,7 +93,7 @@ export default function LoginScreen({ navigation }) {
           <View style={styles.footerContainer}>
             <Text style={styles.footerText}>Bạn chưa có tài khoản ?</Text>
             <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-              <Text style={styles.loginText}> Đăng kí</Text>
+              <Text style={styles.loginText}> Đăng ký</Text>
             </TouchableOpacity>
           </View>
         </View>
