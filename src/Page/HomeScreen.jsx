@@ -2,7 +2,7 @@ import React, { useContext, useState, useEffect, useCallback, useRef } from 'rea
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, FlatList, ActivityIndicator, Alert, RefreshControl } from 'react-native';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { AuthContext } from '../untills/context/AuthContext';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { getAllCustomers, getAllPriceProduct } from '../untills/api';
 
 
@@ -19,38 +19,72 @@ export default function HomeScreen() {
   const [customer, setCustomer] = useState([]);
  
    // Lấy thông tin sản phẩm và khách hàng
-   useEffect(() => {
-    const fetchProductsAndCustomer = async () => {
-      try {
-        const productData = await getAllPriceProduct();
-        if (productData.success) {
-          setProducts(productData.prices);
-          setVisibleProducts(productData.prices.slice(0, 6));
-        } else {
-          Alert.alert("Lỗi", productData.message);
-        }
-
-        const customerData = await getAllCustomers();
-        
-        // Tìm và lưu toàn bộ thông tin `Customer` có `CustomerId` trùng với `user._id`
-        const currentCustomer = customerData.find(cust => cust.CustomerId === user._id);
-        if (currentCustomer) {
-          setCustomer(currentCustomer); 
-        } else {
-          Alert.alert("Không tìm thấy khách hàng", "Thông tin khách hàng chưa có trong hệ thống.");
-        }
-      } catch (err) {
-        // Alert.alert("Lỗi", err.message);
+  //  useEffect(() => {
+  //   const fetchProductsAndCustomer = async () => {
+  //     try {
+  //       const productData = await getAllPriceProduct();
+  //       if (productData.success) {
+  //         setProducts(productData.prices);
+  //         setVisibleProducts(productData.prices.slice(0, 6));
+  //       } else {
+  //         Alert.alert("Lỗi", productData.message);
+  //       }
+  
+  //       const customerData = await getAllCustomers();
+  
+  //       // Tìm và lưu toàn bộ thông tin `Customer` có `CustomerId` trùng với `user._id`
+  //       const currentCustomer = customerData.find(cust => cust.CustomerId === user._id);
+  //       if (currentCustomer) {
+  //         setCustomer(currentCustomer);
+  //       } else {
+  //         Alert.alert("Không tìm thấy khách hàng", "Thông tin khách hàng chưa có trong hệ thống.");
+  //       }
+  //     } catch (err) {
+  //       console.error("Error fetching data:", err);
+  //     }
+  //   };
+  
+  //   // Gọi hàm khi `user` thay đổi
+  //   fetchProductsAndCustomer();
+  
+  //   // Lắng nghe sự kiện focus để load lại dữ liệu
+  //   const unsubscribe = navigation.addListener('focus', () => {
+  //     fetchProductsAndCustomer();
+  //   });
+  //   return unsubscribe;
+  // }, [navigation, user]); 
+ // Lấy thông tin sản phẩm và khách hàng
+   // Hàm lấy thông tin sản phẩm và khách hàng
+   const fetchProductsAndCustomer = async () => {
+    if (!user) return; // Nếu user là null hoặc undefined, không tiếp tục
+    try {
+      const productData = await getAllPriceProduct();
+      if (productData.success) {
+        setProducts(productData.prices);
+        setVisibleProducts(productData.prices.slice(0, 6));
+      } else {
+        Alert.alert("Lỗi", productData.message);
       }
-    };
 
-    fetchProductsAndCustomer();
-  }, [user]);
+      const customerData = await getAllCustomers();
+      const currentCustomer = customerData.find(cust => cust.CustomerId === user._id);
+      if (currentCustomer) {
+        setCustomer(currentCustomer);
+      } else {
+        Alert.alert("Không tìm thấy khách hàng", "Thông tin khách hàng chưa có trong hệ thống.");
+      }
+    } catch (err) {
+      console.error("Error fetching data:", err);
+    }
+  };
 
+  // Gọi hàm fetchProductsAndCustomer mỗi khi màn hình focus lại và khi `user` thay đổi
+  useFocusEffect(
+    useCallback(() => {
+      fetchProductsAndCustomer();
+    }, [user]) // useCallback sẽ chỉ chạy lại khi `user` thay đổi
+  );
 
-console.log(customer.phoneNumber);
-console.log('====================================');
-console.log(user);
 
   const handleShowMore = () => {
     const nextProductsCount = visibleProducts.length + 6;

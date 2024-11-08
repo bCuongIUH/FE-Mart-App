@@ -11,32 +11,34 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false); 
   const { login } = useContext(AuthContext); 
-  
+
   // Hàm xử lý đăng nhập
   const handleLogin = async () => {
     setLoading(true);
     try {
-        const response = await postLogin({ email, password });
-        if (response.status === 200) {
-            const token = response.data.token;
-            const userData = response.data.user;
-
-            // Lưu token và user vào AsyncStorage
-            await AsyncStorage.setItem('token', token);
-
-            // Gọi hàm login từ AuthContext để lưu user vào context
-            login(userData);
-
-            navigation.navigate("HomePage");
-        } else {
-            Alert.alert("Đăng nhập thất bại", "Email hoặc mật khẩu sai. Vui lòng thử lại.");
-        }
+      const response = await postLogin({ email, password });
+      if (response.status === 200) {
+        const token = response.data.token;
+        const userData = response.data.user;
+  
+        // Lưu token và user vào AsyncStorage
+        await AsyncStorage.setItem('token', token);
+  
+        // Gọi hàm login từ AuthContext để lưu user vào context
+        login(userData);
+  
+        navigation.navigate("HomePage");
+      } else {
+        Alert.alert("Đăng nhập thất bại", "Email hoặc mật khẩu sai. Vui lòng thử lại.");
+      }
     } catch (error) {
-        Alert.alert("Đăng nhập thất bại", "Có lỗi xảy ra. Vui lòng thử lại.");
+      const errorMessage = error.response?.data?.message || "Có lỗi xảy ra. Vui lòng thử lại.";
+      Alert.alert("Đăng nhập thất bại", errorMessage);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
+  };
+  
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -77,7 +79,7 @@ export default function LoginScreen({ navigation }) {
             placeholder="Nhập mật khẩu"
           />
 
-          <TouchableOpacity style={styles.forgotPasswordContainer}>
+          <TouchableOpacity style={styles.forgotPasswordContainer} onPress={() => navigation.navigate('ForgotPasswordScreen')}>
             <Text style={styles.forgotPasswordText}>Quên mật khẩu ?</Text>
           </TouchableOpacity>
 

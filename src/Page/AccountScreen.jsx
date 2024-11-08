@@ -12,26 +12,29 @@ export default function AccountScreen() {
 
 
   // Lấy thông tin sản phẩm và khách hàng
-  useEffect(() => {
-    const fetchCustomer = async () => {
-      try {
-      
-        const customerData = await getAllCustomers();
-        
-        // Tìm và lưu toàn bộ thông tin `Customer` có `CustomerId` trùng với `user._id`
-        const currentCustomer = customerData.find(cust => cust.CustomerId === user._id);
-        if (currentCustomer) {
-          setCustomer(currentCustomer); 
-        } else {
-          Alert.alert("Không tìm thấy khách hàng", "Thông tin khách hàng chưa có trong hệ thống.");
-        }
-      } catch (err) {
-        // Alert.alert("Lỗi", err.message);
+  const fetchCustomer = async () => {
+    try {
+      const customerData = await getAllCustomers();
+      const currentCustomer = customerData.find(cust => cust.CustomerId === user._id);
+      if (currentCustomer) {
+        setCustomer(currentCustomer);
+      } else {
+        Alert.alert("Không tìm thấy khách hàng", "Thông tin khách hàng chưa có trong hệ thống.");
       }
-    };
+    } catch (err) {
+      console.error("Error fetching customer data:", err);
+    }
+  };
 
-    fetchCustomer();
-  }, [user]);
+  useEffect(() => {
+    // Lắng nghe sự kiện khi màn hình được focus trở lại
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchCustomer();
+    });
+
+    // Dọn dẹp sự kiện khi component bị hủy
+    return unsubscribe;
+  }, [navigation, user]);
 
 
   //nút đăng xuất
@@ -59,7 +62,6 @@ export default function AccountScreen() {
   const handleEditProfile = () => {
     navigation.navigate('EditProfileScreen', { customer });
   };
-  
 
 
   return (
@@ -90,6 +92,7 @@ export default function AccountScreen() {
         <MenuItem icon="tag" label="Khuyến mãi" />
         {/* <MenuItem icon="piggy-bank" label="Gói tiết kiệm" /> */}
         <MenuItem icon="gift" label="Giới thiệu & Nhận ưu đãi" />
+        <MenuItem icon="cog" label="Cài đặt" onPress={() => navigation.navigate('SettingsScreen')}/>
       </View>
 
       {/* Logout Button */}
@@ -100,9 +103,9 @@ export default function AccountScreen() {
   );
 }
 
-function MenuItem({ icon, label, isNew }) {
+function MenuItem({ icon, label, isNew, onPress }) {
   return (
-    <TouchableOpacity style={styles.menuItem}>
+    <TouchableOpacity style={styles.menuItem} onPress={onPress}>
       <View style={styles.menuItemContent}>
         <FontAwesome name={icon} size={20} color="#555" style={styles.menuIcon} />
         <Text style={styles.menuText}>{label}</Text>
@@ -111,6 +114,7 @@ function MenuItem({ icon, label, isNew }) {
     </TouchableOpacity>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -187,7 +191,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   logoutButton: {
-    top : 280,
+    top : 220,
     backgroundColor: "#A9A9A9",
     paddingVertical: 12,
     alignItems: 'center',

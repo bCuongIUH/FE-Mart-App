@@ -16,6 +16,10 @@ import CheckoutScreen from './src/Cart/CheckoutScreen';
 import DiscountComponent from './src/Discount/DiscountComponent';
 import PaymentMethodScreen from './src/Payment/PaymentMethodScreen';
 import EditProfileScreen from './src/User/EditProfileScreen';
+import { CustomerProvider } from './src/untills/context/CustomerContext';
+import SettingsScreen from './src/User/SettingsScreen';
+import ChangePasswordScreen from './src/User/ChangePasswordScreen';
+import ForgotPasswordScreen from './src/User/ForgotPasswordScreen';
 
 
 
@@ -27,7 +31,6 @@ export default function App() {
     <AuthProvider> 
     <NavigationContainer>
       <Stack.Navigator initialRouteName='Welcome'>
-    
        <Stack.Screen name='Home' options={{headerShown: false}} component={HomeScreen} />
        <Stack.Screen name='Welcome' options={{headerShown: false}} component={WelcomScreen} />
        <Stack.Screen name='Login' options={{headerShown: false}} component={LoginScreen} />
@@ -40,6 +43,9 @@ export default function App() {
        <Stack.Screen name='DiscountScreen' options={{headerShown: false}} component={DiscountComponent} />
        <Stack.Screen name='PaymentMethodScreen' options={{headerShown: false}} component={PaymentMethodScreen} />
        <Stack.Screen name='EditProfileScreen' options={{headerShown: false}} component={EditProfileScreen} />
+       <Stack.Screen name="SettingsScreen" options={{headerShown: false}} component={SettingsScreen} />
+       <Stack.Screen name="ChangePasswordScreen" options={{headerShown: false}} component={ChangePasswordScreen} />
+       <Stack.Screen name="ForgotPasswordScreen" options={{headerShown: false}} component={ForgotPasswordScreen} />
        <Stack.Screen name='HomePage' options={{ headerShown: false }}>
           {() => (
             <RequireAuth>
