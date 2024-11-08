@@ -18,42 +18,7 @@ export default function HomeScreen() {
   const flatListRef = useRef(null);
   const [customer, setCustomer] = useState([]);
  
-   // Lấy thông tin sản phẩm và khách hàng
-  //  useEffect(() => {
-  //   const fetchProductsAndCustomer = async () => {
-  //     try {
-  //       const productData = await getAllPriceProduct();
-  //       if (productData.success) {
-  //         setProducts(productData.prices);
-  //         setVisibleProducts(productData.prices.slice(0, 6));
-  //       } else {
-  //         Alert.alert("Lỗi", productData.message);
-  //       }
   
-  //       const customerData = await getAllCustomers();
-  
-  //       // Tìm và lưu toàn bộ thông tin `Customer` có `CustomerId` trùng với `user._id`
-  //       const currentCustomer = customerData.find(cust => cust.CustomerId === user._id);
-  //       if (currentCustomer) {
-  //         setCustomer(currentCustomer);
-  //       } else {
-  //         Alert.alert("Không tìm thấy khách hàng", "Thông tin khách hàng chưa có trong hệ thống.");
-  //       }
-  //     } catch (err) {
-  //       console.error("Error fetching data:", err);
-  //     }
-  //   };
-  
-  //   // Gọi hàm khi `user` thay đổi
-  //   fetchProductsAndCustomer();
-  
-  //   // Lắng nghe sự kiện focus để load lại dữ liệu
-  //   const unsubscribe = navigation.addListener('focus', () => {
-  //     fetchProductsAndCustomer();
-  //   });
-  //   return unsubscribe;
-  // }, [navigation, user]); 
- // Lấy thông tin sản phẩm và khách hàng
    // Hàm lấy thông tin sản phẩm và khách hàng
    const fetchProductsAndCustomer = async () => {
     if (!user) return; // Nếu user là null hoặc undefined, không tiếp tục
