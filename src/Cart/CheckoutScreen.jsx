@@ -12,8 +12,13 @@ export default function CheckoutScreen() {
   //ưu đãi
   const [appliedDiscount, setAppliedDiscount] = useState("Ưu đãi áp dụng");
 
+
+
 // tổng tiền
-  const totalAmount = selectedProducts.reduce((sum, item) => sum + item.price , 0);
+const totalAmount = selectedProducts.reduce((sum, item) => {
+  return sum + (item.currentPrice * item.quantity || 0);
+}, 0);
+
 
 
   //nhấn vào ưu đãi
@@ -21,32 +26,37 @@ export default function CheckoutScreen() {
     setAppliedDiscount(discount); 
   };
 
+console.log(selectedProducts);
 
 
   //item sản phẩm
   const renderProductItem = ({ item }) => (
     <View style={styles.itemContainer}>
       <Image
-        source={{ uri: item.image }}
+        source={{ uri: item.product.image }}
         style={styles.itemImage}
       />
       <View style={styles.itemDetails}>
-        <Text style={styles.itemTitle}>{item.productName}</Text>
-        <Text style={styles.itemQuantity}>x{item.quantity} - {item.unitName}</Text>
+        <Text style={styles.itemTitle}>{item.product.name}</Text>
+        <Text style={styles.itemQuantity}>x{item.quantity} - {item.unit}</Text>
       </View>
-      <Text style={styles.itemPrice}>{item.price.toLocaleString('vi-VN')}đ</Text>
+      <Text style={styles.itemPrice}>
+       {(item.currentPrice * item.quantity).toLocaleString('vi-VN')}đ
+      </Text>
     </View>
   );
+  
 
   //nút thanh toán
   const handleOrder = () => {
     console.log('Thanh toán các sản phẩm:');
     selectedProducts.forEach((item) => {
-      console.log(`- Sản phẩm: ${item.productName}, Số lượng: ${item.quantity}, Đơn giá: ${item.price.toLocaleString('vi-VN')}đ`);
+      console.log(`- Sản phẩm: ${item.product.name}, Số lượng: ${item.quantity}, Đơn giá: ${item.currentPrice.toLocaleString('vi-VN')}đ`);
     });
     console.log(`Phương thức thanh toán: ${paymentMethod}`);
     console.log(`Ưu đãi áp dụng: ${appliedDiscount}`);
   };
+  
   
   return (
     <View style={styles.container}>
@@ -83,7 +93,7 @@ export default function CheckoutScreen() {
         <FlatList
           data={selectedProducts}
           renderItem={renderProductItem}
-          keyExtractor={(item) => item.productId}
+          keyExtractor={(item) => item._id || item.productId}
           contentContainerStyle={styles.section}
         />
       </View>

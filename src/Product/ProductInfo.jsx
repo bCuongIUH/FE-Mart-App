@@ -1,49 +1,81 @@
-import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useContext, useEffect } from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
-
+import { AuthContext } from '../untills/context/AuthContext'; // Import context chứa customerId
+import { addToCart, getAllCustomers } from '../untills/api';
 
 export default function ProductInfo({ route, navigation }) {
-
+  const { user } = useContext(AuthContext); // Giả sử AuthContext chứa thông tin user và customerId
   const { product } = route.params;
   const [selectedUnit, setSelectedUnit] = useState(product.units[0]); 
   const [price, setPrice] = useState(selectedUnit.price || 0);
   const [quantity, setQuantity] = useState(1);
+  const [customerId, setCustomerId] = useState(null); 
 
-//chọn đơn vị
+  useEffect(() => {
+    // Lấy danh sách tất cả các customer và tìm _id khớp với user._id
+    const fetchCustomerId = async () => {
+      try {
+        const customers = await getAllCustomers();
+        const customer = customers.find(cust => cust.CustomerId === user._id);
+        
+        if (customer) {
+          setCustomerId(customer._id); // Lưu _id của customer vào state
+        } else {
+          console.error("Không tìm thấy khách hàng khớp với user._id");
+        }
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách khách hàng:", error);
+      }
+    };
+
+    fetchCustomerId();
+  }, [user]);
+  // Chọn đơn vị
   const handleUnitChange = (unit) => {
     setSelectedUnit(unit);
     setQuantity(1);
     setPrice(unit.price); 
   };
 
-  //kiểm tra dữ liệu sản phẩm lỗi
+  // Kiểm tra dữ liệu sản phẩm lỗi
   if (!product || !product.units) {
     console.error("Dữ liệu sản phẩm không hợp lệ:", product);
     return <Text>Thông tin sản phẩm không có sẵn</Text>;
   }
-  
+
   const handleQuantityChange = (type) => {
     const newQuantity = type === 'increase' ? quantity + 1 : quantity > 1 ? quantity - 1 : 1;
     setQuantity(newQuantity);
     setPrice(selectedUnit.price * newQuantity); 
   };
-//chuyển chuỗi thành tiền
+
+  // Chuyển chuỗi thành tiền
   const formatCurrency = (value) => {
     return `${value.toLocaleString('vi-VN')} VNĐ`;
   };
-  //nút thêm vào giỏ
-  const handleAddToCart = () => {  
-    navigation.navigate('CartScreen', {
-      productId: product.productId,
-      productName: product.productName,
-      price: price,
-      image: product.image,
-      unitName: selectedUnit.unitName,
-      quantity: quantity,
-    });
+
+  // Nút thêm vào giỏ
+  const handleAddToCart = async () => {
+    if (!customerId) {
+      Alert.alert("Lỗi", "Không tìm thấy thông tin khách hàng.");
+      return;
+    }
+
+    try {
+      const productId = product.productId;
+      const unit = selectedUnit.unitName;
+
+      console.log("Dữ liệu gửi đi:", { customerId, productId, quantity, unit, price });
+      const response = await addToCart(customerId, productId, quantity, unit, price);
+
+      Alert.alert("Thành công", "Sản phẩm đã được thêm vào giỏ hàng.");
+      navigation.navigate('CartScreen');
+    } catch (error) {
+      console.error("Lỗi khi thêm sản phẩm vào giỏ hàng:", error);
+      Alert.alert("Lỗi", "Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.");
+    }
   };
-  
   
   return (
     <View style={styles.container}>
@@ -123,7 +155,7 @@ export default function ProductInfo({ route, navigation }) {
         {/* Price and Add to Cart Button */}
         <View style={styles.footer}>
         <Text style={styles.price}>{formatCurrency(price)}</Text>
-          <TouchableOpacity  onPress={handleAddToCart} style={styles.addToCartButton}>
+          <TouchableOpacity onPress={handleAddToCart} style={styles.addToCartButton}>
             <Text style={styles.addToCartText}>Thêm vào giỏ</Text>
           </TouchableOpacity>
         </View>

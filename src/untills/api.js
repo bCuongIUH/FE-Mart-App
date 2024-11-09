@@ -2,7 +2,7 @@ import axios from "axios";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { config } from "@ant-design/react-native/lib/toast/methods";
 
-const API_URL = "http://192.168.1.10:5000/api";
+const API_URL = "http://192.168.1.56:5000/api";
 
 // Hàm để tạo cấu hình axios với token
 const getConfig = async () => {
@@ -147,6 +147,44 @@ export const updateCustomer = async (customerId, updatedData) => {
     } else {
       console.error("Error updating customer:", error.message || error); // Lỗi khác nếu không có response
     }
+    throw error;
+  }
+};
+//cart
+// 1. API để thêm sản phẩm vào giỏ hàng
+export const addToCart = async (customerId, productId, quantity, unit, price) => {
+  try {
+    const config = await getConfig();
+    const response = await axios.post(`${API_URL}/cart/addtocart`,{ customerId, productId, quantity, unit, price },config);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi thêm sản phẩm vào giỏ hàng:", error);
+    throw error;
+  }
+};
+
+// 2. API để cập nhật trạng thái sản phẩm trong giỏ hàng
+export const updateCartStatus = async (cartId, itemId) => {
+  try {
+    console.log("cartId:", cartId); // Log cartId để kiểm tra giá trị
+    console.log("itemId:", itemId); 
+    const config = await getConfig();
+    const response = await axios.post(`${API_URL}/cart/update-status`, { cartId, itemId }, config);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi cập nhật trạng thái sản phẩm:", error);
+    throw error;
+  }
+};
+// 3. lấy giỏ hàng của customer
+export const getCart = async (customerId) => {
+  try {
+    const response = await axios.get(`${API_URL}/cart`, {
+      params: { customerId }, // Truyền customerId dưới dạng query parameter
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy giỏ hàng:", error);
     throw error;
   }
 };
