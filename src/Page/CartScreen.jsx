@@ -4,17 +4,17 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { CheckBox } from 'react-native-elements';
 import { useNavigation } from '@react-navigation/native';
 import { AuthContext } from '../untills/context/AuthContext';
-import { getAllCustomers, getCart, updateCartStatus } from '../untills/api'; 
+import { getAllCustomers, getCart, updateCartStatus } from '../untills/api';
 
 export default function CartScreen() {
   const navigation = useNavigation();
-  const { user } = useContext(AuthContext); 
+  const { user } = useContext(AuthContext);
   const [products, setProducts] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [customer, setCustomer] = useState(null);
   const [timeouts, setTimeouts] = useState({});
   const [cartId, setCartId] = useState(null);
-  // Lấy giỏ hàng và thiết lập timeout cho từng sản phẩm
+
   useEffect(() => {
     const fetchCustomerAndCart = async () => {
       try {
@@ -32,23 +32,16 @@ export default function CartScreen() {
           setProducts(cartData && cartData.items ? cartData.items : []);
           
           if (cartData && cartData._id) {
-            setCartId(cartData._id); // Lưu lại cartId từ dữ liệu giỏ hàng
+            setCartId(cartData._id);
           }
 
-          // Thiết lập timeout cho từng sản phẩm trong giỏ hàng
-          const newTimeouts = {};
-          cartData.items.forEach(item => {
-            newTimeouts[item._id] = setTimeout(() => {
-              handleTimeout(item._id, cartData._id); // Truyền cả cartId và itemId vào
-            }, 60 * 1000); // 1 phút
-          });
-          setTimeouts(newTimeouts);
+          handleSequentialTimeouts(cartData.items, cartData._id);
         } else {
           console.error("Không tìm thấy khách hàng");
         }
       } catch (err) {
         if (err.response && err.response.status === 404) {
-          setProducts([]); 
+          setProducts([]);
         } else {
           console.error("Lỗi khi lấy dữ liệu:", err);
         }
@@ -59,26 +52,53 @@ export default function CartScreen() {
       fetchCustomerAndCart();
     }
 
-    // Xóa timeout khi rời khỏi màn hình
     return () => {
       Object.values(timeouts).forEach(clearTimeout);
     };
   }, [user]);
 
-  const handleTimeout = async (itemId, cartId) => {
-    try {
-      await updateCartStatus(cartId, itemId);
-      setProducts(prevProducts =>
-        prevProducts.map(item =>
-          item._id === itemId ? { ...item, status: "ChuaChon" } : item
-        )
-      );
-      console.log(`Trạng thái của sản phẩm ${itemId} đã được cập nhật thành "ChuaChon"`);
-    } catch (error) {
-      console.error("Lỗi khi cập nhật trạng thái:", error);
+  //tự động cập nhật trạng thái của sản phẩm
+  const handleSequentialTimeouts = async (items, cartId) => {
+    const newTimeouts = {};
+  
+    for (let item of items) {
+      if (item.status === "ChoThanhToan") {
+        await new Promise((resolve) => {
+          newTimeouts[item._id] = setTimeout(async () => {
+            try {
+              const response = await updateCartStatus(cartId, item._id);
+              if (response && response.success && response.cart) {
+                // Lọc các sản phẩm mới thay đổi trạng thái thành "ChuaChon"
+                const updatedItems = response.cart.items.filter(
+                  (newItem) => newItem.status === "ChuaChon" && !products.find((prod) => prod._id === newItem._id && prod.status === "ChuaChon")
+                );
+  
+                // Cập nhật danh sách products bằng cách giữ lại các sản phẩm cũ
+                setProducts((prevProducts) => 
+                  prevProducts.map((prod) => 
+                    updatedItems.find((updatedItem) => updatedItem._id === prod._id)
+                      ? { ...prod, status: "ChuaChon" }
+                      : prod
+                  )
+                );
+              }
+              resolve();
+            } catch (error) {
+              console.error("Lỗi khi cập nhật trạng thái:", error);
+              resolve();
+            }
+          }, 10000); // Thời gian timeout cho mỗi sản phẩm (60 giây)
+        });
+      }
     }
+    setTimeouts(newTimeouts);
   };
-
+  
+  
+  
+  
+  
+  
 
   const formatCurrency = (value) => `${value.toLocaleString('vi-VN')} VNĐ`;
 
@@ -94,13 +114,10 @@ export default function CartScreen() {
   };
 
   const handleCheckout = () => {
-    console.log("Selected Items:", selectedItems); 
-  
     const selectedProducts = products.filter(product => selectedItems.includes(product.productId || product._id));
-    console.log("Các sản phẩm đã chọn:", selectedProducts); 
-  
     navigation.navigate('CheckoutScreen', { selectedProducts });
   };
+
   const renderProduct = ({ item }) => (
     <View style={styles.cartItem}>
       <Image source={{ uri: item.product.image }} style={styles.productImage} />
@@ -108,16 +125,20 @@ export default function CartScreen() {
         <Text style={styles.productName}>{item.product.name}</Text>
         <Text style={styles.productPrice}>{formatCurrency(item.currentPrice)}</Text>
         <Text style={styles.productUnit}>{item.unit} ({item.quantity})</Text>
+        {/* Hiển thị thông báo nếu trạng thái là "ChuaChon" */}
         {item.status === "ChuaChon" && <Text style={styles.timeoutText}>Đã hết hạn thanh toán</Text>}
       </View>
       <CheckBox
         checked={selectedItems.includes(item._id)}
         onPress={() => toggleSelection(item._id)}
         containerStyle={styles.checkBox}
-        disabled={item.status === "ChuaChon"} // Vô hiệu hóa checkbox nếu item ở trạng thái "ChuaChon"
+        disabled={item.status === "ChuaChon"}
       />
     </View>
   );
+  
+  
+  
   
 
   const totalAmount = selectedItems.reduce((sum, itemId) => {
@@ -140,10 +161,11 @@ export default function CartScreen() {
       </View>
 
       <FlatList
-        data={products}
-        renderItem={renderProduct}
-        keyExtractor={(item) => item._id}
-      />
+  data={products}
+  renderItem={renderProduct}
+  keyExtractor={(item) => item._id.toString()}
+/>
+
 
       {selectedItems.length > 0 && (
         <View style={styles.footerContainer}>
