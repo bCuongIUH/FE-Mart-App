@@ -87,7 +87,7 @@ export default function CartScreen() {
               console.error("Lỗi khi cập nhật trạng thái:", error);
               resolve();
             }
-          }, 10000); // Thời gian timeout cho mỗi sản phẩm (60 giây)
+          }, 300000); //5phut
         });
       }
     }
@@ -112,11 +112,20 @@ export default function CartScreen() {
     setProducts(products.filter((product) => !selectedItems.includes(product.productId)));
     setSelectedItems([]);
   };
-
+//nút tiếp tục
   const handleCheckout = () => {
-    const selectedProducts = products.filter(product => selectedItems.includes(product.productId || product._id));
+    const selectedProducts = products.filter(product => 
+      selectedItems.includes(product.productId || product._id)
+    );
+  
+    // Log `_id` của từng sản phẩm đã chọn
+    selectedProducts.forEach(product => {
+      console.log("Item ID:", product._id);
+    });
+  
     navigation.navigate('CheckoutScreen', { selectedProducts });
   };
+  
 
   const renderProduct = ({ item }) => (
     <View style={styles.cartItem}>
