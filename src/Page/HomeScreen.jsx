@@ -21,7 +21,7 @@ export default function HomeScreen() {
   
    // Hàm lấy thông tin sản phẩm và khách hàng
    const fetchProductsAndCustomer = async () => {
-    if (!user) return; // Nếu user là null hoặc undefined, không tiếp tục
+    if (!user) return;
     try {
       const productData = await getAllPriceProduct();
       if (productData.success) {
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    backgroundColor: '#D8BFD8',
+    backgroundColor: '#ffcc00',
     paddingVertical: 50,
     paddingHorizontal: 16,
     justifyContent: 'center',
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   buyButton: {
-    backgroundColor: '#D8BFD8',
+    backgroundColor: '#ffcc00',
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 20,
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
   showMoreButton: {
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: '#F2E8F2',
+    backgroundColor: '#ffcc00',
     borderRadius: 20,
     alignSelf: 'center',
     marginVertical: 20,
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 15,
     bottom: 15,
-    backgroundColor: '#F2E8F2',
+    backgroundColor: '#ffcc00',
     padding: 10,
     borderRadius: 50,
     alignItems: 'center',

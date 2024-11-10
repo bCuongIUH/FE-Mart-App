@@ -1,14 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { StyleSheet, Text, View, TextInput, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import HomeScreen from './HomeScreen';
 import CartScreen from './CartScreen';
 import ActivityScreen from './ActivityScreen';
 import AccountScreen from './AccountScreen';
-
-
 
 const Tab = createBottomTabNavigator();
 
@@ -16,17 +13,6 @@ export default function HomePage() {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
-        {/* Header  */}
-        {/* <View style={styles.header}>
-          <Text style={styles.welcomeText}> Chào mừng, {user ? user.fullName : "Guest"}</Text>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Tìm kiếm"
-            placeholderTextColor="#A9A9A9"
-          />
-        </View> */}
-
-        {/* Tabs điều hướng */}
         <Tab.Navigator
           screenOptions={({ route }) => ({
             tabBarIcon: ({ color, size }) => {
@@ -38,9 +24,10 @@ export default function HomePage() {
 
               return <AntDesign name={iconName} size={size} color={color} />;
             },
-            tabBarActiveTintColor: '#B391B3',
+            tabBarActiveTintColor: '#ffcc00',
             tabBarInactiveTintColor: 'gray',
             headerShown: false,
+            gestureEnabled: true,
           })}
         >
           <Tab.Screen name="Trang Chủ" component={HomeScreen} />
@@ -63,7 +50,7 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     paddingHorizontal: 16,
     paddingBottom: 16,
-    backgroundColor: '#D8BFD8',
+    backgroundColor: '#ffcc00',
   },
   welcomeText: {
     fontSize: 20,

@@ -2,7 +2,7 @@ import axios from "axios";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { config } from "@ant-design/react-native/lib/toast/methods";
 
-const API_URL = "http://192.168.1.9:5000/api";
+const API_URL = "http://192.168.1.8:5000/api";
 
 // Hàm để tạo cấu hình axios với token
 const getConfig = async () => {
@@ -166,8 +166,6 @@ export const addToCart = async (customerId, productId, quantity, unit, price) =>
 // 2. API để cập nhật trạng thái sản phẩm trong giỏ hàng
 export const updateCartStatus = async (cartId, itemId) => {
   try {
-    console.log("cartId:", cartId); // Log cartId để kiểm tra giá trị
-    console.log("itemId:", itemId); 
     const config = await getConfig();
     const response = await axios.post(`${API_URL}/cart/update-status`, { cartId, itemId }, config);
     return response.data;
@@ -185,6 +183,42 @@ export const getCart = async (customerId) => {
     return response.data;
   } catch (error) {
     console.error("Lỗi khi lấy giỏ hàng:", error);
+    throw error;
+  }
+};
+// 4. API để xóa các sản phẩm từ giỏ hàng
+export const removeCartItems = async (cartId, itemIds) => {
+  try {
+    const config = await getConfig();
+    const response = await axios.delete(`${API_URL}/cart/remove-items`, {
+      data: { cartId, itemIds }, 
+      ...config
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi xóa sản phẩm khỏi giỏ hàng:", error);
+    throw error;
+  }
+};
+// API để tạo hóa đơn
+export const createBill = async (data) => {
+  try {
+    const config = await getConfig();
+    const response = await axios.post(`${API_URL}/bill/create`, data, config );
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi tạo hóa đơn:", error.response?.data?.message || error.message);
+    throw error;
+  }
+};
+// API để lấy danh sách hóa đơn online
+export const getOnlineBills = async () => {
+  try {
+    const config = await getConfig();
+    const response = await axios.get(`${API_URL}/bill/online`, config); 
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy hóa đơn mua trực tuyến:', error);
     throw error;
   }
 };

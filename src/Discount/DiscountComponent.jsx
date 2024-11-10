@@ -1,24 +1,38 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { getAllActiveVouchers } from '../untills/api';
 
 export default function DiscountComponent({ navigation, route }) {
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { totalAmount, onSelectDiscount } = route.params;
 
-  // Nhấn chọn discount
   const handleSelectDiscount = (discount) => {
-    route.params.onSelectDiscount(discount);
-    navigation.goBack();
+    const minOrderValue = discount.conditions[0]?.minOrderValue || 0;
+    const isEligible = totalAmount >= minOrderValue;
+
+    if (isEligible) {
+      onSelectDiscount(discount);
+      navigation.goBack();
+    } else {
+      Alert.alert("Thông báo", "Tổng số tiền không đạt điều kiện tối thiểu cho mã khuyến mãi này.");
+    }
   };
 
-  // Lấy danh sách khuyến mãi
   useEffect(() => {
     const fetchVouchers = async () => {
       try {
         const response = await getAllActiveVouchers();
-        setVouchers(response);
+
+        // Sắp xếp các voucher, những voucher đủ điều kiện lên đầu danh sách
+        const sortedVouchers = response.sort((a, b) => {
+          const aEligible = totalAmount >= (a.conditions[0]?.minOrderValue || 0);
+          const bEligible = totalAmount >= (b.conditions[0]?.minOrderValue || 0);
+          return bEligible - aEligible;
+        });
+
+        setVouchers(sortedVouchers);
       } catch (error) {
         console.error("Error fetching vouchers:", error.message);
       } finally {
@@ -28,7 +42,6 @@ export default function DiscountComponent({ navigation, route }) {
     fetchVouchers();
   }, []);
 
-  // ko có khuyến mãi 
   const EmptyVoucherMessage = () => (
     <View style={styles.emptyContainer}>
       <FontAwesome name="gift" size={50} color="#ccc" />
@@ -51,8 +64,10 @@ export default function DiscountComponent({ navigation, route }) {
         <FlatList
           data={vouchers}
           keyExtractor={(item) => item._id || item.id.toString()}
-          ListEmptyComponent={EmptyVoucherMessage} 
+          ListEmptyComponent={EmptyVoucherMessage}
           renderItem={({ item }) => {
+            const minOrderValue = item.conditions[0]?.minOrderValue || 0;
+            const isEligible = totalAmount >= minOrderValue;
             const formattedConditions = item.conditions
               ? item.conditions.map((cond) => {
                   if (cond.minOrderValue && cond.discountPercentage) {
@@ -67,14 +82,17 @@ export default function DiscountComponent({ navigation, route }) {
 
             return (
               <TouchableOpacity
-                style={styles.discountItem}
-                onPress={() => handleSelectDiscount(item.label || item.code)}
+                style={[styles.discountItem, !isEligible && styles.ineligibleDiscount]}
+                onPress={() => isEligible && handleSelectDiscount(item)}
+                disabled={!isEligible}
               >
                 <View style={styles.discountInfo}>
                   <Text style={styles.discountText}>{item.label || item.code}</Text>
                   <Text style={styles.discountCondition}>{formattedConditions}</Text>
                 </View>
-                <MaterialIcons name="check-box-outline-blank" size={24} color="gray" />
+                {isEligible ? (
+                  <MaterialIcons name="check-box-outline-blank" size={24} color="gray" />
+                ) : null}
               </TouchableOpacity>
             );
           }}
@@ -105,6 +123,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: '#f0f0f0',
   },
+  ineligibleDiscount: {
+    opacity: 0.5,
+  },
   discountInfo: {
     flexDirection: 'column',
   },
@@ -128,4 +149,3 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 });
-
