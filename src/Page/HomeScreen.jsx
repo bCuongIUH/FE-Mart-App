@@ -71,8 +71,16 @@ export default function HomeScreen() {
       <Text style={styles.greeting}>Chào, {customer ? customer.fullName : "Người dùng"} ✨</Text>
       </View>
       <View style={styles.searchContainer}>
+      <TouchableOpacity style={styles.searchContainer} onPress={() => navigation.navigate('Search')}>
         <FontAwesome name="search" size={20} color="#A9A9A9" />
-        <TextInput placeholder="Bạn muốn mua gì?" style={styles.searchInput} />
+        <TextInput 
+          placeholder="Bạn muốn mua gì?" 
+          style={styles.searchInput} 
+          editable={false}  // Làm cho input không thể chỉnh sửa
+          pointerEvents="none" // Đảm bảo không nhận sự kiện từ TextInput
+        />
+      </TouchableOpacity>
+
       </View>
       <View style={styles.locationTags}>
         <TouchableOpacity style={styles.locationTag}>
@@ -184,7 +192,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     backgroundColor: '#F3F4F6',
-    padding: 10,
+    // padding: 10,
     margin: 16,
     borderRadius: 8,
     alignItems: 'center',

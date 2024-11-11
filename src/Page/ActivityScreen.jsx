@@ -1,5 +1,5 @@
 import React, { useState, useCallback, memo, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Alert, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Alert, RefreshControl, InteractionManager } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { getOnlineBills } from '../untills/api'; 
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -16,7 +16,10 @@ const RenderItem = memo(({ item }) => (
           <Image source={{ uri: productItem.image || '' }} style={styles.itemImage} />
           <View style={styles.itemDetails}>
             <Text style={styles.title}>{productItem.title || 'Không có tên sản phẩm'}</Text>
-            <Text style={styles.price}>{`${productItem.totalPrice.toLocaleString('vi-VN')}đ`}</Text>
+            <Text style={styles.price}>
+              {/* Hiển thị totalPrice đã trừ giảm giá */}
+              {`${item.totalPrice.toLocaleString('vi-VN')}đ`}
+            </Text>
             <Text style={styles.quantity}>{productItem.quantity} {productItem.unit}</Text>
           </View>
         </View>
@@ -33,6 +36,7 @@ const RenderItem = memo(({ item }) => (
     </View>
   </View>
 ));
+
 
 export default function ActivityScreen() {
   const [bills, setBills] = useState([]);
@@ -51,6 +55,7 @@ export default function ActivityScreen() {
         id: bill._id,
         time: new Date(bill.createdAt).toLocaleString('vi-VN'),
         status: bill.status === 'HoanThanh' ? 'Hoàn thành' : 'Đang xử lý',
+        totalPrice: bill.totalAmount ,
         items: bill.items.map(productItem => ({
           id: productItem._id,
           title: productItem.product.name || 'Không có tên sản phẩm',
@@ -60,7 +65,7 @@ export default function ActivityScreen() {
           image: productItem.product.image || null,
         })),
       }));
-
+  
       setBills(formattedBills);
     } catch (error) {
       if (error.response && error.response.status === 404) {
@@ -73,10 +78,16 @@ export default function ActivityScreen() {
       setLoading(false);
     }
   }, []);
+  
+console.log('====================================');
+console.log('bills', bills);
+console.log('====================================');
 
   useFocusEffect(
     useCallback(() => {
-      fetchBills();
+      // Sử dụng InteractionManager để trì hoãn fetchBills
+      const task = InteractionManager.runAfterInteractions(fetchBills);
+      return () => task.cancel();
     }, [fetchBills])
   );
 
@@ -101,7 +112,7 @@ export default function ActivityScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={{ left: -20, top: 23 }}>
+        <TouchableOpacity   onPress={() => navigation.navigate('HomePage')} style={{ left: -20, top: 23 }}>
           <MaterialIcons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Hoạt động</Text>
@@ -142,10 +153,11 @@ export default function ActivityScreen() {
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={{ padding: 20, flexGrow: 1 }}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-            initialNumToRender={5} 
+            initialNumToRender={1} 
             maxToRenderPerBatch={5}
-            windowSize={5}
-            removeClippedSubviews
+            windowSize={10}
+            removeClippedSubviews={false}
+            legacyImplementation={true}
           />
         </View>
       )}

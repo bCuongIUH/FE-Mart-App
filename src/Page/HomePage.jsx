@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { StyleSheet, Text, View, TextInput, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import HomeScreen from './HomeScreen';
 import CartScreen from './CartScreen';
@@ -8,13 +9,16 @@ import ActivityScreen from './ActivityScreen';
 import AccountScreen from './AccountScreen';
 
 const Tab = createBottomTabNavigator();
-
+const Stack = createNativeStackNavigator();
 export default function HomePage() { 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
         <Tab.Navigator
+        //  lazy={true}
+      
           screenOptions={({ route }) => ({
+            lazy: true, 
             tabBarIcon: ({ color, size }) => {
               let iconName;
               if (route.name === 'Trang Chủ') iconName = 'home';

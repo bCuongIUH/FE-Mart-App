@@ -21,6 +21,7 @@ import SettingsScreen from './src/User/SettingsScreen';
 import ChangePasswordScreen from './src/User/ChangePasswordScreen';
 import ForgotPasswordScreen from './src/User/ForgotPasswordScreen';
 import ActivityScreen from './src/Page/ActivityScreen';
+import SearchScreen from './src/Product/SearchScreen';
 
 
 
@@ -37,6 +38,7 @@ export default function App() {
        <Stack.Screen name='Login' options={{headerShown: false}} component={LoginScreen} />
        <Stack.Screen name='SignUp' options={{headerShown: false}} component={SignUpScreen} />
        <Stack.Screen name='OTP' options={{headerShown: false}} component={OTPVerificationScreen} />
+       <Stack.Screen name="Search"  options={{ headerShown: false }} component={SearchScreen} />
        <Stack.Screen name='ProductInfo' options={{headerShown: false}} component={ProductInfo} />
        <Stack.Screen name='ProductCart' options={{headerShown: false}} component={ProductCart} />
        <Stack.Screen name='CartScreen' options={{headerShown: false}} component={CartScreen} />
@@ -47,7 +49,7 @@ export default function App() {
        <Stack.Screen name="SettingsScreen" options={{headerShown: false}} component={SettingsScreen} />
        <Stack.Screen name="ChangePasswordScreen" options={{headerShown: false}} component={ChangePasswordScreen} />
        <Stack.Screen name="ForgotPasswordScreen" options={{headerShown: false}} component={ForgotPasswordScreen} />
-       <Stack.Screen name="ActivityScreen" options={{headerShown: false}} component={ActivityScreen} />
+       <Stack.Screen name="ActivityScreen" options={{headerShown: false}}  component={ActivityScreen} />
        <Stack.Screen name='HomePage' options={{ headerShown: false }}>
           {() => (
             <RequireAuth>

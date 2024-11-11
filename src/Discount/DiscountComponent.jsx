@@ -9,7 +9,7 @@ export default function DiscountComponent({ navigation, route }) {
   const { totalAmount, onSelectDiscount } = route.params;
 
   const handleSelectDiscount = (discount) => {
-    const minOrderValue = discount.conditions[0]?.minOrderValue || 0;
+    const minOrderValue = discount.conditions?.minOrderValue || 0;
     const isEligible = totalAmount >= minOrderValue;
 
     if (isEligible) {
@@ -27,8 +27,8 @@ export default function DiscountComponent({ navigation, route }) {
 
         // Sắp xếp các voucher, những voucher đủ điều kiện lên đầu danh sách
         const sortedVouchers = response.sort((a, b) => {
-          const aEligible = totalAmount >= (a.conditions[0]?.minOrderValue || 0);
-          const bEligible = totalAmount >= (b.conditions[0]?.minOrderValue || 0);
+          const aEligible = totalAmount >= (a.conditions?.minOrderValue || 0);
+          const bEligible = totalAmount >= (b.conditions?.minOrderValue || 0);
           return bEligible - aEligible;
         });
 
@@ -66,18 +66,16 @@ export default function DiscountComponent({ navigation, route }) {
           keyExtractor={(item) => item._id || item.id.toString()}
           ListEmptyComponent={EmptyVoucherMessage}
           renderItem={({ item }) => {
-            const minOrderValue = item.conditions[0]?.minOrderValue || 0;
+            const minOrderValue = item.conditions?.minOrderValue || 0;
             const isEligible = totalAmount >= minOrderValue;
-            const formattedConditions = item.conditions
-              ? item.conditions.map((cond) => {
-                  if (cond.minOrderValue && cond.discountPercentage) {
-                    return `Giảm ${cond.discountPercentage}% cho đơn tối thiểu ${cond.minOrderValue.toLocaleString('vi-VN')}đ, tối đa ${cond.maxDiscountAmount?.toLocaleString('vi-VN') || 'không giới hạn'}đ`;
-                  } else if (cond.minOrderValue && cond.discountAmount) {
-                    return `Giảm ${cond.discountAmount.toLocaleString('vi-VN')}đ cho đơn tối thiểu ${cond.minOrderValue.toLocaleString('vi-VN')}đ`;
-                  } else {
-                    return 'Điều kiện không xác định';
-                  }
-                }).join('\n')
+
+            // Xử lý điều kiện giảm giá dựa trên loại voucher
+            const formattedConditions = item.type === 'FixedDiscount'
+              ? `Giảm ${item.conditions.discountAmount?.toLocaleString('vi-VN')}đ cho đơn tối thiểu ${item.conditions.minOrderValue?.toLocaleString('vi-VN')}đ`
+              : item.type === 'PercentageDiscount'
+              ? `Giảm ${item.conditions.discountPercentage}% tối đa ${item.conditions.maxDiscountAmount?.toLocaleString('vi-VN') || 'không giới hạn'}đ cho đơn tối thiểu ${item.conditions.minOrderValue?.toLocaleString('vi-VN')}đ`
+              : item.type === 'BuyXGetY'
+              ? `Mua ${item.conditions.quantityX} ${item.conditions.unitXName} ${item.conditions.productXName} để nhận ${item.conditions.quantityY} ${item.conditions.unitYName} ${item.conditions.productYName}`
               : 'Không có điều kiện';
 
             return (
