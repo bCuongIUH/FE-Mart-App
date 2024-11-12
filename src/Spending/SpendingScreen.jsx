@@ -163,6 +163,25 @@ export default function SpendingScreen() {
       </View>
 
       <ScrollView style={styles.scrollView}>
+        <View style={styles.timeSelection}>
+          <TouchableOpacity 
+            style={[styles.timeButton, timeFrame === 'week' && styles.activeTimeButton]}
+            onPress={() => setTimeFrame('week')}
+            accessibilityLabel="Xem theo tuần"
+            accessibilityState={{ selected: timeFrame === 'week' }}
+          >
+            <Text style={styles.timeButtonText}>Tuần</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.timeButton, timeFrame === 'month' && styles.activeTimeButton]}
+            onPress={() => setTimeFrame('month')}
+            accessibilityLabel="Xem theo tháng"
+            accessibilityState={{ selected: timeFrame === 'month' }}
+          >
+            <Text style={styles.timeButtonText}>Tháng</Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.spendingInfo}>
           <Text style={styles.spendingAmount}>{totalSpending.toLocaleString('vi-VN')}đ</Text>
           <Text style={styles.orderCount}>({orderCount} đơn hàng)</Text>
@@ -193,6 +212,7 @@ export default function SpendingScreen() {
           showValuesOnTopOfBars={true}
           fromZero={true}
         />
+
       </ScrollView>
     </View>
   );

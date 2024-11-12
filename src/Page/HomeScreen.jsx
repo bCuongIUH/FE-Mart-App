@@ -51,6 +51,7 @@ export default function HomeScreen() {
   );
 
 
+
   const handleShowMore = () => {
     const nextProductsCount = visibleProducts.length + 6;
     setVisibleProducts(products.slice(0, nextProductsCount));

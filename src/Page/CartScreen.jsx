@@ -14,8 +14,7 @@ export default function CartScreen() {
   const [customer, setCustomer] = useState(null);
   const [cartId, setCartId] = useState(null);
 
-
-  const fetchCustomerAndCart = async () => {
+  const fetchCustomerAndCart = useCallback(async () => {
     try {
       if (!user || !user._id) {
         console.error("User không có _id hoặc user không tồn tại");
@@ -29,7 +28,7 @@ export default function CartScreen() {
         setCustomer(currentCustomer);
         const cartData = await getCart(currentCustomer._id);
         setProducts(cartData && cartData.items ? cartData.items : []);
-        
+
         if (cartData && cartData._id) {
           setCartId(cartData._id);
         }
@@ -43,14 +42,13 @@ export default function CartScreen() {
         console.error("Lỗi khi lấy dữ liệu:", err);
       }
     }
-  };
+  }, [user]);
 
+  // Sử dụng useFocusEffect để làm mới dữ liệu mỗi khi màn hình CartScreen được focus
   useFocusEffect(
     useCallback(() => {
-      if (products.length === 0) {
-        fetchCustomerAndCart();
-      }
-    }, [user, products])
+      fetchCustomerAndCart();
+    }, [fetchCustomerAndCart])
   );
 
   const formatCurrency = (value) => `${value.toLocaleString('vi-VN')} VNĐ`;
@@ -61,19 +59,16 @@ export default function CartScreen() {
     );
   };
 
-  // xóa item giỏ hàng
+  // Xóa các mục đã chọn trong giỏ hàng
   const handleDelete = async () => {
     if (!cartId || selectedItems.length === 0) return;
-  
+
     try {
-      // Gọi API để xóa các item đã chọn
       const response = await removeCartItems(cartId, selectedItems);
-  
+
       if (response.success) {
-       
         setProducts(products.filter((product) => !selectedItems.includes(product._id)));
-        setSelectedItems([]); 
-        // console.log("Xóa sản phẩm thành công:", response.message);
+        setSelectedItems([]);
       } else {
         console.error("Lỗi khi xóa sản phẩm:", response.message);
       }
@@ -83,13 +78,9 @@ export default function CartScreen() {
   };
 
   const handleCheckout = () => {
-    const selectedProducts = products.filter(product => 
+    const selectedProducts = products.filter(product =>
       selectedItems.includes(product.productId || product._id)
     );
-
-    selectedProducts.forEach(product => {
-      console.log("Item ID:", product._id);
-    });
 
     navigation.navigate('CheckoutScreen', { selectedProducts });
   };
@@ -111,16 +102,17 @@ export default function CartScreen() {
       />
     </View>
   );
+
   const totalAmount = selectedItems.reduce((sum, itemId) => {
     const item = products.find(product => product._id === itemId);
     return sum + (item ? item.totalPrice : 0); 
   }, 0);
-  
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <MaterialIcons style={{ top: 15, left : -25}} name="arrow-back" size={24} color="black" />
+          <MaterialIcons style={{ top: 15, left : -25 }} name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Giỏ hàng của tôi</Text>
         {selectedItems.length > 0 && (
@@ -159,6 +151,7 @@ export default function CartScreen() {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F3F4F6' },

@@ -57,6 +57,12 @@ export default function ProductInfo({ route, navigation }) {
 
   // Nút thêm vào giỏ
   const handleAddToCart = async () => {
+    // Kiểm tra nếu sản phẩm hết hàng
+    if (selectedUnit.quantity === 0) {
+      Alert.alert("Thông báo", "Sản phẩm hiện đã hết hàng.");
+      return;
+    }
+  
     if (selectedUnit.price === 0) {
       Alert.alert("Thông báo", "Sản phẩm hiện chưa có giá bán.");
       return;
@@ -82,6 +88,7 @@ export default function ProductInfo({ route, navigation }) {
       Alert.alert("Lỗi", "Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.");
     }
   };
+  
   
 
   

@@ -1,8 +1,9 @@
-import React, { useState, useCallback, memo, useRef } from 'react';
+import React, { useState, useCallback, memo, useRef, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Alert, RefreshControl, InteractionManager } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { getOnlineBills } from '../untills/api'; 
+import { getOnlineBills, getAllCustomers } from '../untills/api'; 
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { AuthContext } from '../untills/context/AuthContext';
 
 const RenderItem = memo(({ item }) => (
   <View style={styles.activityItem}>
@@ -17,7 +18,6 @@ const RenderItem = memo(({ item }) => (
           <View style={styles.itemDetails}>
             <Text style={styles.title}>{productItem.title || 'Không có tên sản phẩm'}</Text>
             <Text style={styles.price}>
-              {/* Hiển thị totalPrice đã trừ giảm giá */}
               {`${item.totalPrice.toLocaleString('vi-VN')}đ`}
             </Text>
             <Text style={styles.quantity}>{productItem.quantity} {productItem.unit}</Text>
@@ -30,15 +30,16 @@ const RenderItem = memo(({ item }) => (
       <Text style={[styles.orderStatus, item.status === 'Hoàn thành' ? styles.completedStatus : styles.refundedStatus]}>
         {item.status}
       </Text>
-      <TouchableOpacity style={styles.reorderButton} onPress={() => Alert.alert('Đặt lại', `Bạn muốn đặt lại hóa đơn với mã `)}>
+      {/* <TouchableOpacity style={styles.reorderButton} onPress={() => Alert.alert('Đặt lại', `Bạn muốn đặt lại hóa đơn với mã `)}>
         <Text style={styles.reorderText}>Đặt lại</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   </View>
 ));
 
-
 export default function ActivityScreen() {
+  const { user } = useContext(AuthContext); 
+  const [customer, setCustomer] = useState(null); 
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -46,16 +47,36 @@ export default function ActivityScreen() {
   const navigation = useNavigation();
   const flatListRef = useRef(null);
 
+  // Hàm để lấy thông tin customer dựa trên user._id
+  const fetchCustomer = useCallback(async () => {
+    try {
+      const customers = await getAllCustomers();
+      const currentCustomer = customers.find(cust => cust.CustomerId === user._id);
+      if (currentCustomer) {
+        setCustomer(currentCustomer); 
+      } else {
+        Alert.alert("Thông báo", "Không tìm thấy thông tin khách hàng.");
+      }
+    } catch (error) {
+      console.error("Lỗi khi lấy thông tin khách hàng:", error);
+      Alert.alert("Lỗi", "Không thể tải thông tin khách hàng.");
+    }
+  }, [user]);
+
+  // Hàm để lấy danh sách hóa đơn dựa trên customer._id
   const fetchBills = useCallback(async () => {
+    if (!customer?._id) return; // Chỉ thực hiện nếu đã có customer._id
     setLoading(true);
     try {
       const response = await getOnlineBills();
-      const sortedResponse = response.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      const formattedBills = sortedResponse.map(bill => ({
+      // Lọc hóa đơn theo customer._id
+      const customerBills = response.filter(bill => bill.customer._id === customer._id);
+      const sortedBills = customerBills.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const formattedBills = sortedBills.map(bill => ({
         id: bill._id,
         time: new Date(bill.createdAt).toLocaleString('vi-VN'),
         status: bill.status === 'HoanThanh' ? 'Hoàn thành' : 'Đang xử lý',
-        totalPrice: bill.totalAmount ,
+        totalPrice: bill.totalAmount,
         items: bill.items.map(productItem => ({
           id: productItem._id,
           title: productItem.product.name || 'Không có tên sản phẩm',
@@ -65,7 +86,7 @@ export default function ActivityScreen() {
           image: productItem.product.image || null,
         })),
       }));
-  
+
       setBills(formattedBills);
     } catch (error) {
       if (error.response && error.response.status === 404) {
@@ -77,16 +98,24 @@ export default function ActivityScreen() {
     } finally {
       setLoading(false);
     }
-  }, []);
-  
+  }, [customer]);
 
+  // useFocusEffect để lấy customer và hóa đơn mỗi khi màn hình được focus
   useFocusEffect(
     useCallback(() => {
-      // Sử dụng InteractionManager để trì hoãn fetchBills
-      const task = InteractionManager.runAfterInteractions(fetchBills);
+      const task = InteractionManager.runAfterInteractions(async () => {
+        await fetchCustomer();
+      });
       return () => task.cancel();
-    }, [fetchBills])
+    }, [fetchCustomer])
   );
+
+  // Khi `customer` thay đổi, tự động gọi `fetchBills` để lấy hóa đơn của customer
+  useEffect(() => {
+    if (customer) {
+      fetchBills();
+    }
+  }, [customer]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -100,7 +129,7 @@ export default function ActivityScreen() {
 
   // Lọc các hóa đơn dựa trên trạng thái đã chọn
   const filteredBills = bills.filter(bill => {
-    if (filter === 'Tất cả') return true;  
+    if (filter === 'Tất cả') return true;
     if (filter === 'Hoàn thành') return bill.status === 'Hoàn thành';
     if (filter === 'Hoàn trả') return bill.status === 'Hoàn trả';
     return true;
@@ -109,7 +138,7 @@ export default function ActivityScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity   onPress={() => navigation.navigate('HomePage')} style={{ left: -20, top: 23 }}>
+        <TouchableOpacity onPress={() => navigation.navigate('HomePage')} style={{ left: -20, top: 23 }}>
           <MaterialIcons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Hoạt động</Text>
@@ -145,12 +174,12 @@ export default function ActivityScreen() {
         <View style={{ flex: 1 }}>
           <FlatList
             ref={flatListRef}
-            data={filteredBills}  
+            data={filteredBills}
             renderItem={({ item }) => <RenderItem item={item} />}
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={{ padding: 20, flexGrow: 1 }}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-            initialNumToRender={1} 
+            initialNumToRender={1}
             maxToRenderPerBatch={5}
             windowSize={10}
             removeClippedSubviews={false}
@@ -161,6 +190,8 @@ export default function ActivityScreen() {
     </View>
   );
 }
+
+// Styles giữ nguyên như bạn đã viết
 
 const styles = StyleSheet.create({
   container: {
