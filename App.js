@@ -23,6 +23,8 @@ import ForgotPasswordScreen from './src/User/ForgotPasswordScreen';
 import ActivityScreen from './src/Page/ActivityScreen';
 import SearchScreen from './src/Product/SearchScreen';
 import ProductListScreen from './src/Product/ProductListScreen';
+import DiscountScreen from './src/Discount/DiscountScreen';
+import SpendingScreen from './src/Spending/SpendingScreen';
 
 
 
@@ -52,6 +54,8 @@ export default function App() {
        <Stack.Screen name="ForgotPasswordScreen" options={{headerShown: false}} component={ForgotPasswordScreen} />
        <Stack.Screen name="ActivityScreen" options={{headerShown: false}}  component={ActivityScreen} />
        <Stack.Screen name="ProductListScreen" options={{headerShown: false}}  component={ProductListScreen} />
+       <Stack.Screen name="Discount" options={{headerShown: false}}  component={DiscountScreen} />
+       <Stack.Screen name="SpendingScreen" options={{headerShown: false}}  component={SpendingScreen} />
        <Stack.Screen name='HomePage' options={{ headerShown: false }}>
           {() => (
             <RequireAuth>

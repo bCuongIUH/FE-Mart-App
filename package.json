@@ -25,6 +25,7 @@
     "fe-mart-app": "file:",
     "react": "18.2.0",
     "react-native": "0.74.5",
+    "react-native-chart-kit": "^6.12.0",
     "react-native-elements": "^3.4.3",
     "react-native-gesture-handler": "^2.20.2",
     "react-native-heroicons": "^4.0.0",

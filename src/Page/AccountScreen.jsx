@@ -82,14 +82,14 @@ export default function AccountScreen() {
 
       {/* Menu Items */}
       <View style={styles.menuContainer}>
-        <MenuItem icon="money" label="Quản lý chi tiêu" isNew />
+        <MenuItem icon="money" label="Quản lý chi tiêu" isNew  onPress={() => navigation.navigate('SpendingScreen')}/>
         <MenuItem icon="calendar" label="Kế hoạch mua sắm" isNew />
         {/* <MenuItem icon="wallet" label="Ví trả sau – bePaylater" isNew /> */}
         {/* <MenuItem icon="home" label="Home PayLater" isNew /> */}
         {/* <MenuItem icon="link" label="Liên kết tài khoản" /> */}
         {/* <MenuItem icon="car" label="Cài đặt chuyến đi" /> */}
         {/* <MenuItem icon="shield" label="Bảo hiểm OPES" /> */}
-        <MenuItem icon="tag" label="Khuyến mãi" />
+        <MenuItem icon="tag" label="Khuyến mãi" onPress={() => navigation.navigate('Discount')} />
         {/* <MenuItem icon="piggy-bank" label="Gói tiết kiệm" /> */}
         <MenuItem icon="gift" label="Giới thiệu & Nhận ưu đãi" />
         <MenuItem icon="cog" label="Cài đặt" onPress={() => navigation.navigate('SettingsScreen')}/>
