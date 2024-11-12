@@ -22,6 +22,7 @@ import ChangePasswordScreen from './src/User/ChangePasswordScreen';
 import ForgotPasswordScreen from './src/User/ForgotPasswordScreen';
 import ActivityScreen from './src/Page/ActivityScreen';
 import SearchScreen from './src/Product/SearchScreen';
+import ProductListScreen from './src/Product/ProductListScreen';
 
 
 
@@ -50,6 +51,7 @@ export default function App() {
        <Stack.Screen name="ChangePasswordScreen" options={{headerShown: false}} component={ChangePasswordScreen} />
        <Stack.Screen name="ForgotPasswordScreen" options={{headerShown: false}} component={ForgotPasswordScreen} />
        <Stack.Screen name="ActivityScreen" options={{headerShown: false}}  component={ActivityScreen} />
+       <Stack.Screen name="ProductListScreen" options={{headerShown: false}}  component={ProductListScreen} />
        <Stack.Screen name='HomePage' options={{ headerShown: false }}>
           {() => (
             <RequireAuth>

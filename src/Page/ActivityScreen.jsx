@@ -79,9 +79,6 @@ export default function ActivityScreen() {
     }
   }, []);
   
-console.log('====================================');
-console.log('bills', bills);
-console.log('====================================');
 
   useFocusEffect(
     useCallback(() => {
@@ -148,7 +145,7 @@ console.log('====================================');
         <View style={{ flex: 1 }}>
           <FlatList
             ref={flatListRef}
-            data={filteredBills}  // Áp dụng dữ liệu đã lọc vào FlatList
+            data={filteredBills}  
             renderItem={({ item }) => <RenderItem item={item} />}
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={{ padding: 20, flexGrow: 1 }}
