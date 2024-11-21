@@ -77,6 +77,7 @@ export const AuthProvider = ({ children }) => {
       if (userData) {
         setUser(userData);
         await AsyncStorage.setItem('user', JSON.stringify(userData));
+        
       }
     };
 

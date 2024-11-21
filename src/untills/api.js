@@ -224,3 +224,27 @@ export const getOnlineBills = async () => {
     throw error;
   }
 };
+// API để xóa bill
+// API để xóa hóa đơn
+export const deleteBill = async (id) => {
+  try {
+    const config = await getConfig();
+    const response = await axios.delete(`${API_URL}/bill/bills/${id}`, config);
+    return response.data; // Trả về dữ liệu nếu xóa thành công
+  } catch (error) {
+    console.error('Error deleting bill:', error); // Log lỗi
+    return { success: false, message: 'Xóa hóa đơn thất bại.' }; 
+  }
+};
+
+//hoàn trả
+export const createReturnRequest = async (requestData) => {
+  try {
+    const config = await getConfig();
+    const response = await axios.post(`${API_URL}/return`, requestData, config);
+    return response.data; // Trả về dữ liệu nếu yêu cầu thành công
+  } catch (error) {
+    console.error('Error creating return request:', error); 
+    return { success: false, message: 'Tạo phiếu hoàn trả thất bại.' };
+  }
+};

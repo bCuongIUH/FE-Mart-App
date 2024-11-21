@@ -6,42 +6,90 @@ import { getAllActiveVouchers } from '../untills/api';
 export default function DiscountComponent({ navigation, route }) {
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { totalAmount, onSelectDiscount } = route.params;
+  const { totalAmount, onSelectDiscount, selectedProducts = [] } = route.params;
 
+  // Handle voucher selection
   const handleSelectDiscount = (discount) => {
-    const minOrderValue = discount.conditions?.minOrderValue || 0;
-    const isEligible = totalAmount >= minOrderValue;
-
-    if (isEligible) {
-      onSelectDiscount(discount);
-      navigation.goBack();
+    if (!discount.conditions) {
+      Alert.alert("Lỗi", "Điều kiện của voucher không hợp lệ.");
+      return;
+    }
+  
+    if (discount.type === 'BuyXGetY') {
+      const { productXId, unitX, quantityX } = discount.conditions;
+      const eligibleProduct = selectedProducts.find(item => 
+        item.product._id === productXId &&
+        item.unit === unitX && 
+        item.quantity >= quantityX
+      );
+  
+      if (eligibleProduct) {
+        onSelectDiscount(discount);
+        navigation.goBack();
+      } else {
+        Alert.alert("Thông báo", "Bạn chưa đủ điều kiện để áp dụng khuyến mãi này.");
+      }
     } else {
-      Alert.alert("Thông báo", "Tổng số tiền không đạt điều kiện tối thiểu cho mã khuyến mãi này.");
+      const minOrderValue = discount.conditions?.minOrderValue || 0;
+      const isEligible = totalAmount >= minOrderValue;
+  
+      if (isEligible) {
+        onSelectDiscount(discount);
+        navigation.goBack();
+      } else {
+        Alert.alert("Thông báo", "Tổng số tiền không đạt điều kiện tối thiểu cho mã khuyến mãi này.");
+      }
     }
   };
+  
 
+  // Fetch and sort vouchers
   useEffect(() => {
     const fetchVouchers = async () => {
       try {
         const response = await getAllActiveVouchers();
-
-        // Sắp xếp các voucher, những voucher đủ điều kiện lên đầu danh sách
-        const sortedVouchers = response.sort((a, b) => {
-          const aEligible = totalAmount >= (a.conditions?.minOrderValue || 0);
-          const bEligible = totalAmount >= (b.conditions?.minOrderValue || 0);
-          return bEligible - aEligible;
-        });
-
+        if (!response || !Array.isArray(response)) {
+          setVouchers([]);
+          return;
+        }
+  
+        // Filter and sort vouchers safely
+        const sortedVouchers = response
+          .filter((voucher) => voucher.conditions) // Ensure conditions exist
+          .sort((a, b) => {
+            if (a.type === 'BuyXGetY' && b.type === 'BuyXGetY') {
+              const aEligible = selectedProducts.some(item => 
+                item.product._id === a.conditions?.productXId && item.quantity >= (a.conditions?.quantityX || 0)
+              );
+              const bEligible = selectedProducts.some(item => 
+                item.product._id === b.conditions?.productXId && item.quantity >= (b.conditions?.quantityX || 0)
+              );
+              return bEligible - aEligible;
+            } else if (a.type === 'BuyXGetY') {
+              return -1;
+            } else if (b.type === 'BuyXGetY') {
+              return 1;
+            } else {
+              const aEligible = totalAmount >= (a.conditions?.minOrderValue || 0);
+              const bEligible = totalAmount >= (b.conditions?.minOrderValue || 0);
+              return bEligible - aEligible;
+            }
+          });
+  
         setVouchers(sortedVouchers);
       } catch (error) {
         console.error("Error fetching vouchers:", error.message);
+        Alert.alert("Lỗi", "Không thể tải danh sách khuyến mãi. Vui lòng thử lại sau.");
       } finally {
         setLoading(false);
       }
     };
+  
     fetchVouchers();
-  }, []);
+  }, [totalAmount, selectedProducts]);
+  
 
+  // Render empty message for vouchers
   const EmptyVoucherMessage = () => (
     <View style={styles.emptyContainer}>
       <FontAwesome name="gift" size={50} color="#ccc" />
@@ -49,6 +97,36 @@ export default function DiscountComponent({ navigation, route }) {
     </View>
   );
 
+  // Check eligibility for discounts
+  const isEligibleForDiscount = (item) => {
+    if (item.type === 'BuyXGetY') {
+      return selectedProducts.some(product => 
+        product.product._id === item.conditions?.productXId &&
+        product.unit === item.conditions?.unitX &&
+        product.quantity >= (item.conditions?.quantityX || 0)
+      );
+    } else {
+      const minOrderValue = item.conditions?.minOrderValue || 0;
+      return totalAmount >= minOrderValue;
+    }
+  };
+  
+
+  // Format conditions for display
+  const getFormattedConditions = (item) => {
+    if (item.type === 'BuyXGetY') {
+      return `Mua ${item.conditions.quantityX} ${item.conditions.unitX || 'sản phẩm'} ${item.conditions.productXName} để nhận ${item.conditions.quantityY} ${item.conditions.unitY || 'sản phẩm'} ${item.conditions.productYName}`;
+    } else if (item.type === 'FixedDiscount') {
+      return `Giảm ${item.conditions.discountAmount?.toLocaleString('vi-VN')}đ cho đơn tối thiểu ${item.conditions.minOrderValue?.toLocaleString('vi-VN')}đ`;
+    } else if (item.type === 'PercentageDiscount') {
+      return `Giảm ${item.conditions.discountPercentage}% tối đa ${item.conditions.maxDiscountAmount?.toLocaleString('vi-VN') || 'không giới hạn'}đ cho đơn tối thiểu ${item.conditions.minOrderValue?.toLocaleString('vi-VN')}đ`;
+    } else {
+      return 'Không có điều kiện';
+    }
+  };
+  
+
+  // Render UI
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -59,42 +137,34 @@ export default function DiscountComponent({ navigation, route }) {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#ff6600" style={{ marginTop: 20 }} />
+        <ActivityIndicator size={50} color="#ff6600" style={{ marginTop: 20 }} />
       ) : (
         <FlatList
-          data={vouchers}
-          keyExtractor={(item) => item._id || item.id.toString()}
-          ListEmptyComponent={EmptyVoucherMessage}
-          renderItem={({ item }) => {
-            const minOrderValue = item.conditions?.minOrderValue || 0;
-            const isEligible = totalAmount >= minOrderValue;
-
-            // Xử lý điều kiện giảm giá dựa trên loại voucher
-            const formattedConditions = item.type === 'FixedDiscount'
-              ? `Giảm ${item.conditions.discountAmount?.toLocaleString('vi-VN')}đ cho đơn tối thiểu ${item.conditions.minOrderValue?.toLocaleString('vi-VN')}đ`
-              : item.type === 'PercentageDiscount'
-              ? `Giảm ${item.conditions.discountPercentage}% tối đa ${item.conditions.maxDiscountAmount?.toLocaleString('vi-VN') || 'không giới hạn'}đ cho đơn tối thiểu ${item.conditions.minOrderValue?.toLocaleString('vi-VN')}đ`
-              : item.type === 'BuyXGetY'
-              ? `Mua ${item.conditions.quantityX} ${item.conditions.unitXName} ${item.conditions.productXName} để nhận ${item.conditions.quantityY} ${item.conditions.unitYName} ${item.conditions.productYName}`
-              : 'Không có điều kiện';
-
-            return (
-              <TouchableOpacity
-                style={[styles.discountItem, !isEligible && styles.ineligibleDiscount]}
-                onPress={() => isEligible && handleSelectDiscount(item)}
-                disabled={!isEligible}
-              >
-                <View style={styles.discountInfo}>
-                  <Text style={styles.discountText}>{item.label || item.code}</Text>
-                  <Text style={styles.discountCondition}>{formattedConditions}</Text>
-                </View>
-                {isEligible ? (
-                  <MaterialIcons name="check-box-outline-blank" size={24} color="gray" />
-                ) : null}
-              </TouchableOpacity>
-            );
-          }}
-        />
+        data={vouchers}
+        keyExtractor={(item) => item._id || item.id.toString()}
+        ListEmptyComponent={EmptyVoucherMessage}
+        renderItem={({ item }) => {
+          const isEligible = isEligibleForDiscount(item);
+          const formattedConditions = getFormattedConditions(item);
+      
+          return (
+            <TouchableOpacity
+              style={[styles.discountItem, !isEligible && styles.ineligibleDiscount]}
+              onPress={() => isEligible && handleSelectDiscount(item)}
+              disabled={!isEligible}
+            >
+              <View style={styles.discountInfo}>
+                <Text style={styles.discountText}>{item.label || item.code}</Text>
+                <Text style={styles.discountCondition}>{formattedConditions}</Text>
+              </View>
+              {isEligible ? (
+                <MaterialIcons name="check-box-outline-blank" size={24} color="gray" />
+              ) : null}
+            </TouchableOpacity>
+          );
+        }}
+      />
+      
       )}
     </View>
   );

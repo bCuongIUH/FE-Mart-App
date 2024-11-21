@@ -1,8 +1,9 @@
-import React, { useCallback, useContext, useState } from 'react';
+
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image, FlatList, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import { createBill, getAllCustomers } from '../untills/api';
+import { createBill, getAllCustomers, getAllPriceProduct } from '../untills/api';
 import { AuthContext } from '../untills/context/AuthContext';
 
 export default function CheckoutScreen() {
@@ -12,8 +13,29 @@ export default function CheckoutScreen() {
   const { selectedProducts } = route.params;
   const [paymentMethod, setPaymentMethod] = useState('Chọn phương thức thanh toán');
   const [appliedDiscount, setAppliedDiscount] = useState(null);
-  const [customer, setCustomer] = useState([]);
+  const [customer, setCustomer] = useState(null);
+  const [promotionalItems, setPromotionalItems] = useState([]);
+  const [products, setProducts] = useState([]);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const productsData = await getAllPriceProduct();
+        if (productsData.success) {
+          setProducts(productsData.prices || []);
+        } else {
+          console.error("Failed to fetch products:", productsData.message);
+        }
+
+      
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  
   const fetchCustomer = async () => {
     if (!user) return;
     try {
@@ -44,9 +66,12 @@ export default function CheckoutScreen() {
   const calculateDiscountedTotal = () => {
     if (!appliedDiscount || !appliedDiscount.conditions) return totalAmount;
   
-    const condition = appliedDiscount.conditions; // Vì conditions là đối tượng, không cần lặp qua
+    const condition = appliedDiscount.conditions;
     
-    if (condition.discountAmount) {
+    if (appliedDiscount.type === "BuyXGetY") {
+      // BuyXGetY logic is handled separately, no direct discount on total
+      return totalAmount;
+    } else if (condition.discountAmount) {
       return totalAmount - condition.discountAmount;
     } else if (condition.discountPercentage) {
       const discount = (totalAmount * condition.discountPercentage) / 100;
@@ -56,55 +81,125 @@ export default function CheckoutScreen() {
     
     return totalAmount;
   };
-  
 
   const discountedTotal = calculateDiscountedTotal();
 
   const handleSelectDiscount = (discount) => {
+    if (!discount) {
+      setAppliedDiscount(null);
+      setPromotionalItems([]);
+      return;
+    }
+  
     setAppliedDiscount(discount);
+    if (discount.type === "BuyXGetY") {
+      applyBuyXGetYDiscount(discount);
+    } else {
+      setPromotionalItems([]);
+    }
   };
+  
+  const applyBuyXGetYDiscount = (discount) => {
+    const { productXId, quantityX, productYId, quantityY } = discount.conditions;
+  
+    const eligibleItem = selectedProducts.find(item => item.product._id === productXId);
+  
+    if (eligibleItem && eligibleItem.quantity >= quantityX) {
+      const freeItemsCount = Math.floor(eligibleItem.quantity / quantityX) * quantityY;
+  
+      // Tìm sản phẩm Y từ danh sách sản phẩm (products) đã tải từ API
+      const productYData = products.find(product => product.productId === productYId);
+  
+      const promotionalItem = {
+        product: {
+          _id: productYId,
+          name: productYData ? productYData.productName : discount.conditions.productYName, // Lấy tên sản phẩm từ dữ liệu API nếu có
+          image: productYData ? productYData.image : discount.conditions.productYImage || '', // Lấy hình ảnh từ dữ liệu API nếu có
+        },
+        quantity: freeItemsCount,
+        unit: discount.conditions.unitY, // Đơn vị của sản phẩm tặng
+        currentPrice: 0, // Giá 0 cho hàng khuyến mãi
+        isPromotional: true, // Đánh dấu là khuyến mãi
+      };
+  
+      setPromotionalItems([promotionalItem]);
+    } else {
+      setPromotionalItems([]); // Xóa quà tặng nếu không đủ điều kiện
+    }
+  };
+  
+
 
   const renderProductItem = ({ item }) => (
     <View style={styles.itemContainer}>
-      <Image source={{ uri: item.product.image }} style={styles.itemImage} />
+      <Image 
+        source={{ uri: item.product.image || 'https://via.placeholder.com/60' }} 
+        style={styles.itemImage} 
+      />
       <View style={styles.itemDetails}>
         <Text style={styles.itemTitle}>{item.product.name}</Text>
-        <Text style={styles.itemQuantity}>x{item.quantity} - {item.unit}</Text>
+        <Text style={styles.itemQuantity}>
+          x{item.quantity} - {item.unit}
+        </Text>
+        {item.isPromotional && <Text style={styles.promotionalText}>Khuyến mãi</Text>}
       </View>
-      <Text style={styles.itemPrice}>{(item.currentPrice * item.quantity).toLocaleString('vi-VN')}đ</Text>
+      <Text style={styles.itemPrice}>
+        {item.currentPrice > 0
+          ? `${(item.currentPrice * item.quantity).toLocaleString('vi-VN')}đ`
+          : 'Miễn phí'}
+      </Text>
     </View>
   );
+  
+
+  
 
   const handleOrder = async () => {
-    const finalTotal = discountedTotal ? discountedTotal : totalAmount;
-    const itemIds = selectedProducts.map(item => item._id);
-
     if (!paymentMethod || paymentMethod === "Chọn phương thức thanh toán") {
       Alert.alert("Thông báo", "Vui lòng chọn phương thức thanh toán.");
       return;
     }
-
+  
+    if (!customer || !customer._id) {
+      Alert.alert("Thông báo", "Không tìm thấy thông tin khách hàng. Vui lòng đăng nhập lại.");
+      return;
+    }
+  
+    const finalTotal = discountedTotal;
+    const itemIds = [...selectedProducts, ...promotionalItems].map(item => item._id).filter(Boolean);
+  
+    if (itemIds.length === 0) {
+      Alert.alert("Thông báo", "Không có sản phẩm nào trong giỏ hàng.");
+      return;
+    }
+  
     const billData = {
       customerId: customer._id,
       paymentMethod: paymentMethod === "Tiền mặt" ? "Cash" : paymentMethod,
       itemIds,
-      voucherCode: appliedDiscount ? appliedDiscount.code : undefined
+      voucherCodes: appliedDiscount ? [appliedDiscount.code] : [], // Gửi voucherCode trong mảng []
     };
-
+  
+    console.log("Bill Data:", billData);
+  
     try {
       const response = await createBill(billData);
-      Alert.alert("Thành công", "Hóa đơn của bạn đã được tạo thành công!");
-      navigation.navigate('ActivityScreen', { bill: response.bill });
-    } catch (error) {
-      if (error.response && error.response.status === 400) {
-        const errorMessage = error.response.data.message || "Không thể tạo hóa đơn.";
-        Alert.alert("Thông báo", errorMessage);
+      if (response && response.bill) {
+        console.log("Bill created:", response.bill);
+        Alert.alert("Thành công", "Hóa đơn của bạn đã được tạo thành công!");
+        navigation.navigate('ActivityScreen', { bill: response.bill });
       } else {
-        Alert.alert("Lỗi", "Không thể tạo hóa đơn. Vui lòng thử lại.");
-        console.error("Lỗi khi tạo hóa đơn:", error);
+        throw new Error("Không nhận được thông tin hóa đơn từ server.");
       }
+    } catch (error) {
+      console.error("Lỗi khi tạo hóa đơn:", error);
+      Alert.alert("Lỗi", "Có lỗi xảy ra khi tạo hóa đơn. Vui lòng thử lại.");
     }
   };
+  
+  
+  
+  
 
   return (
     <View style={styles.container}>
@@ -141,11 +236,11 @@ export default function CheckoutScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Cùng tôi khám phá giỏ hàng của bạn</Text>
         <FlatList
-          data={selectedProducts}
-          renderItem={renderProductItem}
-          keyExtractor={(item) => item._id || item.productId}
-          contentContainerStyle={styles.section}
-        />
+      data={[...selectedProducts, ...promotionalItems]}
+      renderItem={renderProductItem}
+      keyExtractor={(item, index) => item._id || `${item.product._id}-${index}`}
+    />
+
       </View>
 
       <View style={styles.footer}>
@@ -174,7 +269,7 @@ export default function CheckoutScreen() {
 
           <Text style={styles.separator}>|</Text>
 
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.discountButton}
             onPress={() =>
               navigation.navigate('DiscountScreen', {
@@ -185,7 +280,31 @@ export default function CheckoutScreen() {
           >
             <Text style={styles.discountText}>Ưu đãi</Text>
             <MaterialIcons name="arrow-drop-down" size={20} color="gray" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
+
+<TouchableOpacity
+  style={styles.discountButton}
+  onPress={() => {
+    console.log("Selected Products with Units:", selectedProducts.map(product => ({
+      id: product.product._id,
+      name: product.product.name,
+      unit: product.unit,
+      quantity: product.quantity,
+    })));
+    navigation.navigate('DiscountScreen', {
+      onSelectDiscount: handleSelectDiscount,
+      totalAmount,
+      selectedProducts: selectedProducts.map((product) => ({
+        ...product,
+        unit: product.unit, // Truyền đơn vị
+      })),
+    });
+  }}
+>
+  <Text style={styles.discountText}>Ưu đãi</Text>
+  <MaterialIcons name="arrow-drop-down" size={20} color="gray" />
+</TouchableOpacity>
+
 
           <Text style={styles.separator}>|</Text>
 
@@ -201,7 +320,6 @@ export default function CheckoutScreen() {
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF' },
@@ -220,6 +338,7 @@ const styles = StyleSheet.create({
   itemTitle: { fontSize: 16 },
   itemQuantity: { color: '#888' },
   itemPrice: { fontSize: 16, fontWeight: 'bold' },
+  promotionalText: { color: '#4CAF50', fontStyle: 'italic' },
   footer: {
     position: 'absolute',
     bottom: 0,

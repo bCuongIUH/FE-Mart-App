@@ -138,7 +138,7 @@ export default function SpendingScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#ffcc00" />
+        <ActivityIndicator  size={50} color="#ffcc00" />
         <Text>Đang tải dữ liệu...</Text>
       </View>
     );

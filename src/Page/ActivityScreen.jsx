@@ -1,59 +1,93 @@
 import React, { useState, useCallback, memo, useRef, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Alert, RefreshControl, InteractionManager } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { getOnlineBills, getAllCustomers } from '../untills/api'; 
+import { getOnlineBills, getAllCustomers, getAllPriceProduct } from '../untills/api';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { AuthContext } from '../untills/context/AuthContext';
 
-const RenderItem = memo(({ item }) => (
-  <View style={styles.activityItem}>
-    <View style={styles.itemHeader}>
-      <Text style={styles.time}>{item.time}</Text>
-    </View>
+const calculateOriginalTotal = (items) => {
+  return items.reduce((total, item) => total + (item.quantity * item.currentPrice), 0);
+};
 
-    <View style={styles.itemContent}>
-      {item.items.map((productItem, index) => (
-        <View key={productItem.id || index} style={styles.productItem}>
-          <Image source={{ uri: productItem.image || '' }} style={styles.itemImage} />
-          <View style={styles.itemDetails}>
-            <Text style={styles.title}>{productItem.title || 'Không có tên sản phẩm'}</Text>
-            <Text style={styles.price}>
-              {`${item.totalPrice.toLocaleString('vi-VN')}đ`}
-            </Text>
-            <Text style={styles.quantity}>{productItem.quantity} {productItem.unit}</Text>
+const RenderItem = memo(({ item, onPress }) => (
+  <TouchableOpacity onPress={() => onPress(item)}>
+    <View style={styles.activityItem}>
+      <View style={styles.itemHeader}>
+        <Text style={styles.time}>{item.time}</Text>
+      </View>
+
+      <View style={styles.itemContent}>
+        {item.items.map((productItem, index) => (
+          <View key={productItem.id || index} style={styles.productItem}>
+            <Image source={{ uri: productItem.image || '' }} style={styles.itemImage} />
+            <View style={styles.itemDetails}>
+              <Text style={styles.title}>
+                {productItem.title} 
+                {productItem.totalPrice === 0 && <Text style={styles.promotionalText}> (Quà tặng)</Text>}
+              </Text>
+              <Text style={styles.price}>
+                {productItem.totalPrice > 0
+                  ? `${productItem.totalPrice.toLocaleString('vi-VN')}đ`
+                  : 'Miễn phí'}
+              </Text>
+              <Text style={styles.quantity}>{productItem.quantity} {productItem.unit}</Text>
+            </View>
           </View>
-        </View>
-      ))}
-    </View>
+        ))}
+      </View>
 
-    <View style={styles.statusButtonContainer}>
-      <Text style={[styles.orderStatus, item.status === 'Hoàn thành' ? styles.completedStatus : styles.refundedStatus]}>
-        {item.status}
-      </Text>
-      {/* <TouchableOpacity style={styles.reorderButton} onPress={() => Alert.alert('Đặt lại', `Bạn muốn đặt lại hóa đơn với mã `)}>
-        <Text style={styles.reorderText}>Đặt lại</Text>
-      </TouchableOpacity> */}
+      <View style={styles.statusButtonContainer}>
+      <Text 
+          style={[
+            styles.orderStatus, 
+            item.status === 'Hoàn thành' ? styles.completedStatus : 
+            item.status === 'Hoàn trả' ? styles.refundedStatus : 
+            item.status === 'Từ chối' ? styles.refundedStatus : 
+            item.status === 'Đang xử lý' ? styles.processingStatus : null
+          ]}
+        >
+          {item.status}
+        </Text>
+      </View>
+
+      <View style={styles.priceContainer}>
+        {calculateOriginalTotal(item.items) !== item.totalPrice ? (
+          <>
+           <Text style={styles.discountedTotalText}>
+              {item.totalPrice.toLocaleString('vi-VN')}đ
+            </Text>
+            <Text style={styles.originalTotalText}>
+              {calculateOriginalTotal(item.items).toLocaleString('vi-VN')}đ
+            </Text>
+           
+          </>
+        ) : (
+          <Text style={styles.discountedTotalText}>
+            {item.totalPrice.toLocaleString('vi-VN')}đ
+          </Text>
+        )}
+      </View>
     </View>
-  </View>
+  </TouchableOpacity>
 ));
 
-export default function ActivityScreen() {
-  const { user } = useContext(AuthContext); 
-  const [customer, setCustomer] = useState(null); 
+export default function ActivityScreen(route) {
+  const { user } = useContext(AuthContext);
+  const [customer, setCustomer] = useState(null);
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState('Tất cả');
   const navigation = useNavigation();
   const flatListRef = useRef(null);
+  const [products, setProducts] = useState([]);
 
-  // Hàm để lấy thông tin customer dựa trên user._id
   const fetchCustomer = useCallback(async () => {
     try {
       const customers = await getAllCustomers();
       const currentCustomer = customers.find(cust => cust.CustomerId === user._id);
       if (currentCustomer) {
-        setCustomer(currentCustomer); 
+        setCustomer(currentCustomer);
       } else {
         Alert.alert("Thông báo", "Không tìm thấy thông tin khách hàng.");
       }
@@ -63,28 +97,71 @@ export default function ActivityScreen() {
     }
   }, [user]);
 
-  // Hàm để lấy danh sách hóa đơn dựa trên customer._id
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const productsData = await getAllPriceProduct();
+        if (productsData.success) {
+          setProducts(productsData.prices || []);
+        } else {
+          console.error("Failed to fetch products:", productsData.message);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    if (route.params?.refresh) {
+      fetchBills();
+    }
+  }, [route.params?.refresh]);
+
   const fetchBills = useCallback(async () => {
-    if (!customer?._id) return; // Chỉ thực hiện nếu đã có customer._id
+    if (!customer?._id) return;
     setLoading(true);
     try {
-      const response = await getOnlineBills();
-      // Lọc hóa đơn theo customer._id
+      const [response, productsResponse] = await Promise.all([getOnlineBills(), getAllPriceProduct()]);
+      
+      const productsMap = new Map(productsResponse.prices.map(product => [product.productId.toString(), product.image]));
+      
       const customerBills = response.filter(bill => bill.customer._id === customer._id);
       const sortedBills = customerBills.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
       const formattedBills = sortedBills.map(bill => ({
         id: bill._id,
+        customer: bill.customer,
+        billCode: bill.billCode,
+        paymentMethod: bill.paymentMethod,
+        // status: bill.status,
         time: new Date(bill.createdAt).toLocaleString('vi-VN'),
-        status: bill.status === 'HoanThanh' ? 'Hoàn thành' : 'Đang xử lý',
+        status: 
+        bill.status === 'HoanThanh' ? 'Hoàn thành' : 
+        bill.status === 'HoanTra' ? 'Hoàn trả' : 
+        bill.status === 'Canceled' ? 'Từ chối' : 
+        'Đang xử lý',
         totalPrice: bill.totalAmount,
-        items: bill.items.map(productItem => ({
-          id: productItem._id,
-          title: productItem.product.name || 'Không có tên sản phẩm',
-          quantity: productItem.quantity,
-          unit: productItem.unit,
-          totalPrice: productItem.totalPrice,
-          image: productItem.product.image || null,
-        })),
+        items: [
+          ...bill.items.map(productItem => ({
+            currentPrice: productItem.currentPrice,
+            id: productItem._id,
+            title: productItem.product.name || 'Không có tên sản phẩm',
+            quantity: productItem.quantity,
+            unit: productItem.unit,
+            totalPrice: productItem.totalPrice || (productItem.currentPrice * productItem.quantity) || 0,
+            image: productItem.product.image || 'https://via.placeholder.com/50',
+          })),
+          ...bill.giftItems.map(giftItem => ({
+            id: giftItem._id,
+            title: `🎁 ${giftItem.product.name || 'Sản phẩm khuyến mãi'}`,
+            quantity: giftItem.quantity,
+            unit: giftItem.unit,
+            totalPrice: 0,
+            image: productsMap.get(giftItem.product.toString()) || 'https://via.placeholder.com/50',
+          })),
+        ],
       }));
 
       setBills(formattedBills);
@@ -100,7 +177,6 @@ export default function ActivityScreen() {
     }
   }, [customer]);
 
-  // useFocusEffect để lấy customer và hóa đơn mỗi khi màn hình được focus
   useFocusEffect(
     useCallback(() => {
       const task = InteractionManager.runAfterInteractions(async () => {
@@ -110,7 +186,6 @@ export default function ActivityScreen() {
     }, [fetchCustomer])
   );
 
-  // Khi `customer` thay đổi, tự động gọi `fetchBills` để lấy hóa đơn của customer
   useEffect(() => {
     if (customer) {
       fetchBills();
@@ -124,14 +199,15 @@ export default function ActivityScreen() {
   };
 
   if (loading) {
-    return <ActivityIndicator size="large" color="#ff9800" style={styles.loadingIndicator} />;
+    return <ActivityIndicator size={50} color="#ff9800" style={styles.loadingIndicator} />;
   }
 
-  // Lọc các hóa đơn dựa trên trạng thái đã chọn
   const filteredBills = bills.filter(bill => {
     if (filter === 'Tất cả') return true;
     if (filter === 'Hoàn thành') return bill.status === 'Hoàn thành';
     if (filter === 'Hoàn trả') return bill.status === 'Hoàn trả';
+    if (filter === 'Đang xử lý') return bill.status === 'Đang xử lý';
+    if (filter === 'Từ chối') return bill.status === 'Từ chối';
     return true;
   });
 
@@ -163,6 +239,18 @@ export default function ActivityScreen() {
         >
           <Text style={filter === 'Hoàn trả' ? styles.filterTextActive : styles.filterText}>Hoàn trả</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={filter === 'Đang xử lý' ? styles.filterButtonActive : styles.filterButton}
+          onPress={() => setFilter('Đang xử lý')}
+        >
+          <Text style={filter === 'Đang xử lý' ? styles.filterTextActive : styles.filterText}>Đang xử lý</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={filter === 'Từ chối' ? styles.filterButtonActive : styles.filterButton}
+          onPress={() => setFilter('Từ chối')}
+        >
+          <Text style={filter === 'Từ chối' ? styles.filterTextActive : styles.filterText}>Từ chối</Text>
+        </TouchableOpacity>
       </View>
 
       {filteredBills.length === 0 ? (
@@ -175,23 +263,16 @@ export default function ActivityScreen() {
           <FlatList
             ref={flatListRef}
             data={filteredBills}
-            renderItem={({ item }) => <RenderItem item={item} />}
+            renderItem={({ item }) => <RenderItem item={item} onPress={(selectedBill) => navigation.navigate('OrderDetailScreen', { bill: selectedBill })} />}
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={{ padding: 20, flexGrow: 1 }}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-            initialNumToRender={1}
-            maxToRenderPerBatch={5}
-            windowSize={10}
-            removeClippedSubviews={false}
-            legacyImplementation={true}
           />
         </View>
       )}
     </View>
   );
 }
-
-// Styles giữ nguyên như bạn đã viết
 
 const styles = StyleSheet.create({
   container: {
@@ -239,6 +320,7 @@ const styles = StyleSheet.create({
     borderColor: '#f0f0f0',
     flexDirection: 'column',
     position: 'relative',
+    minHeight: 100,
   },
   itemHeader: {
     flexDirection: 'row',
@@ -296,6 +378,11 @@ const styles = StyleSheet.create({
   refundedStatus: {
     color: '#ff5722',
   },
+  processingStatus: {
+    color: '#FFA500',
+   
+  },
+  
   reorderButton: {
     paddingVertical: 5,
     paddingHorizontal: 15,
@@ -321,5 +408,22 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: '#888',
+  },
+  priceContainer: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+  },
+  originalTotalText: {
+    fontSize: 14,
+    color: '#888',
+    textDecorationLine: 'line-through',
+  },
+  discountedTotalText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'black',
   },
 });

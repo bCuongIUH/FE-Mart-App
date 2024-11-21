@@ -34,7 +34,7 @@ export default function DiscountScreen({ navigation }) {
       : item.type === 'PercentageDiscount'
       ? `Giảm ${item.conditions.discountPercentage}% tối đa ${item.conditions.maxDiscountAmount?.toLocaleString('vi-VN') || 'không giới hạn'}đ cho đơn tối thiểu ${item.conditions.minOrderValue?.toLocaleString('vi-VN')}đ`
       : item.type === 'BuyXGetY'
-      ? `Mua ${item.conditions.quantityX} ${item.conditions.unitXName} ${item.conditions.productXName} để nhận ${item.conditions.quantityY} ${item.conditions.unitYName} ${item.conditions.productYName}`
+      ? `Mua ${item.conditions.quantityX} ${item.conditions.unitX} ${item.conditions.productXName} để nhận ${item.conditions.quantityY} ${item.conditions.unitY} ${item.conditions.productYName}`
       : 'Không có điều kiện';
 
     return (
@@ -57,7 +57,7 @@ export default function DiscountScreen({ navigation }) {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#ff6600" style={{ marginTop: 20 }} />
+        <ActivityIndicator size={50} color="#ff6600" style={{ marginTop: 20 }} />
       ) : (
         <FlatList
           data={vouchers}

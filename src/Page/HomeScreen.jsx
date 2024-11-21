@@ -5,7 +5,14 @@ import { AuthContext } from '../untills/context/AuthContext';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { getAllCustomers, getAllPriceProduct } from '../untills/api';
 
-
+const categories = [
+  { name: 'Đồ gia dụng', category: 'Đồ gia dụng', icon: require('../../assets/images/do-gia-dung.png') },
+  { name: 'Dụng cụ học tập', category: 'Dụng cụ học tập', icon: require('../../assets/images/dung-cu-hoc-tap.png') },
+  { name: 'Hoa quả', category: 'Hoa quả', icon: require('../../assets/images/hoa-qua.png') },
+  { name: 'Đồ hộp', category: 'Đồ hộp', icon: require('../../assets/images/do-hop.png') },
+  { name: 'Đồ uống đóng chai', category: 'Đồ uống đóng chai', icon: require('../../assets/images/do-uong.png') },
+  { name: 'Mỹ phẩm', category: 'Mỹ phẩm', icon: require('../../assets/images/my-pham.png') },
+];
 export default function HomeScreen() {
   const { user } = useContext(AuthContext);
   const navigation = useNavigation();
@@ -18,6 +25,7 @@ export default function HomeScreen() {
   const flatListRef = useRef(null);
   const [customer, setCustomer] = useState([]);
  
+  
   
    // Hàm lấy thông tin sản phẩm và khách hàng
    const fetchProductsAndCustomer = async () => {
@@ -92,19 +100,33 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
       <View style={styles.servicesContainer}>
+        {categories.map((cat, index) => (
+          <ServiceIcon
+            key={index}
+            name={cat.name}
+            icon={cat.icon}
+            category={cat.category}
+          />
+        ))}
+      </View>
+   
+      {/* <View style={styles.servicesContainer}>
         <ServiceIcon name="Đồ gia dụng" icon={require('../../assets/images/do-gia-dung.png')} />
         <ServiceIcon name="Dụng cụ học tập" icon={require('../../assets/images/dung-cu-hoc-tap.png')} />
         <ServiceIcon name="Hoa quả" icon={require('../../assets/images/hoa-qua.png')} />
         <ServiceIcon name="Đồ hộp" icon={require('../../assets/images/do-hop.png')} />
         <ServiceIcon name="Đồ uống đóng chai"  icon={require('../../assets/images/do-uong.png')} />
         <ServiceIcon name="Mỹ phẩm" icon={require('../../assets/images/my-pham.png')} />
-      </View>
+      </View> */}
       <Text style={styles.sectionTitle}>Sản phẩm dành cho bạn</Text>
     </>
   );
 
-  const ServiceIcon = ({ name, icon }) => (
-    <TouchableOpacity style={styles.serviceIconContainer}>
+  const ServiceIcon = ({ name, icon, category }) => (
+    <TouchableOpacity
+      style={styles.serviceIconContainer}
+      onPress={() => navigation.navigate('CategoryScreen', { category })}
+    >
       <Image source={typeof icon === 'string' ? { uri: icon } : icon} style={styles.serviceIcon} />
       <Text style={styles.serviceText}>{name}</Text>
     </TouchableOpacity>
