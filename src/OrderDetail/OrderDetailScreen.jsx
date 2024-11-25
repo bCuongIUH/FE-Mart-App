@@ -111,6 +111,15 @@ export default function OrderDetailScreen({ route, navigation }) {
               </View>
             </>
           )}
+             {bill.status === 'Kiểm hàng' && (
+            <>
+              <Text style={styles.statusTitle}>Đơn hàng của bạn đã được tiếp nhận hoàn trả</Text>
+              <Text style={styles.statusMessage}>Chúng tôi sẽ tiếp nhận và kiểm tra đơn hàng của bạn!</Text>
+              <View style={styles.statusIconContainer}>
+                <MaterialIcons name="hourglass-empty" size={50} color="#ffc107" />
+              </View>
+            </>
+          )}
           {bill.status === 'Từ chối' && (
             <>
               <Text style={styles.statusTitle}>Đơn hàng của bạn đã từ chối hoàn trả</Text>

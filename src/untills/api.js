@@ -238,13 +238,26 @@ export const deleteBill = async (id) => {
 };
 
 //hoàn trả
-export const createReturnRequest = async (requestData) => {
+export const createReturnRequest = async (formData) => {
   try {
     const config = await getConfig();
-    const response = await axios.post(`${API_URL}/return`, requestData, config);
-    return response.data; // Trả về dữ liệu nếu yêu cầu thành công
+    config.headers = {
+      ...config.headers,
+      'Content-Type': 'multipart/form-data', 
+    };
+
+    const response = await axios.post(`${API_URL}/return`, formData, config);
+
+    return {
+      success: true,
+      data: response.data,
+    };
   } catch (error) {
-    console.error('Error creating return request:', error); 
-    return { success: false, message: 'Tạo phiếu hoàn trả thất bại.' };
+    console.error('Error creating return request:', error.response?.data || error.message);
+
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Tạo phiếu hoàn trả thất bại.',
+    };
   }
 };

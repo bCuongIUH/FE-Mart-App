@@ -6,7 +6,11 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { AuthContext } from '../untills/context/AuthContext';
 
 const calculateOriginalTotal = (items) => {
-  return items.reduce((total, item) => total + (item.quantity * item.currentPrice), 0);
+  return items.reduce((total, item) => {
+    const price = item.currentPrice || 0;
+    const quantity = item.quantity || 0;
+    return total + price * quantity;
+  }, 0);
 };
 
 const RenderItem = memo(({ item, onPress }) => (
@@ -37,12 +41,13 @@ const RenderItem = memo(({ item, onPress }) => (
       </View>
 
       <View style={styles.statusButtonContainer}>
-      <Text 
+        <Text 
           style={[
             styles.orderStatus, 
             item.status === 'Hoàn thành' ? styles.completedStatus : 
             item.status === 'Hoàn trả' ? styles.refundedStatus : 
             item.status === 'Từ chối' ? styles.refundedStatus : 
+            item.status === 'Kiểm hàng' ? styles.processingStatus : 
             item.status === 'Đang xử lý' ? styles.processingStatus : null
           ]}
         >
@@ -53,13 +58,12 @@ const RenderItem = memo(({ item, onPress }) => (
       <View style={styles.priceContainer}>
         {calculateOriginalTotal(item.items) !== item.totalPrice ? (
           <>
-           <Text style={styles.discountedTotalText}>
+            <Text style={styles.discountedTotalText}>
               {item.totalPrice.toLocaleString('vi-VN')}đ
             </Text>
             <Text style={styles.originalTotalText}>
               {calculateOriginalTotal(item.items).toLocaleString('vi-VN')}đ
             </Text>
-           
           </>
         ) : (
           <Text style={styles.discountedTotalText}>
@@ -113,12 +117,6 @@ export default function ActivityScreen(route) {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    if (route.params?.refresh) {
-      fetchBills();
-    }
-  }, [route.params?.refresh]);
-
   const fetchBills = useCallback(async () => {
     if (!customer?._id) return;
     setLoading(true);
@@ -135,13 +133,13 @@ export default function ActivityScreen(route) {
         customer: bill.customer,
         billCode: bill.billCode,
         paymentMethod: bill.paymentMethod,
-        // status: bill.status,
         time: new Date(bill.createdAt).toLocaleString('vi-VN'),
         status: 
-        bill.status === 'HoanThanh' ? 'Hoàn thành' : 
-        bill.status === 'HoanTra' ? 'Hoàn trả' : 
-        bill.status === 'Canceled' ? 'Từ chối' : 
-        'Đang xử lý',
+          bill.status === 'HoanThanh' ? 'Hoàn thành' : 
+          bill.status === 'HoanTra' ? 'Hoàn trả' : 
+          bill.status === 'Canceled' ? 'Từ chối' : 
+          bill.status === 'KiemHang' ? 'Kiểm hàng' : // Đã thêm trạng thái "Kiểm hàng"
+          'Đang xử lý',
         totalPrice: bill.totalAmount,
         items: [
           ...bill.items.map(productItem => ({
@@ -206,7 +204,8 @@ export default function ActivityScreen(route) {
     if (filter === 'Tất cả') return true;
     if (filter === 'Hoàn thành') return bill.status === 'Hoàn thành';
     if (filter === 'Hoàn trả') return bill.status === 'Hoàn trả';
-    if (filter === 'Đang xử lý') return bill.status === 'Đang xử lý';
+    if (filter === 'Đang xử lý') return ['Đang xử lý', 'Kiểm hàng'].includes(bill.status);
+    if (filter === 'Kiểm hàng') return bill.status === 'Kiểm hàng';
     if (filter === 'Từ chối') return bill.status === 'Từ chối';
     return true;
   });
@@ -240,11 +239,20 @@ export default function ActivityScreen(route) {
           <Text style={filter === 'Hoàn trả' ? styles.filterTextActive : styles.filterText}>Hoàn trả</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={filter === 'Đang xử lý' ? styles.filterButtonActive : styles.filterButton}
+          style={['Đang xử lý', 'Kiểm hàng'].includes(filter) ? styles.filterButtonActive : styles.filterButton}
           onPress={() => setFilter('Đang xử lý')}
         >
-          <Text style={filter === 'Đang xử lý' ? styles.filterTextActive : styles.filterText}>Đang xử lý</Text>
+          <Text style={['Đang xử lý', 'Kiểm hàng'].includes(filter) ? styles.filterTextActive : styles.filterText}>
+            Đang xử lý
+          </Text>
         </TouchableOpacity>
+
+        {/* <TouchableOpacity
+          style={filter === 'Kiểm hàng' ? styles.filterButtonActive : styles.filterButton}
+          onPress={() => setFilter('Kiểm hàng')}
+        >
+          <Text style={filter === 'Kiểm hàng' ? styles.filterTextActive : styles.filterText}>Kiểm hàng</Text>
+        </TouchableOpacity> */}
         <TouchableOpacity
           style={filter === 'Từ chối' ? styles.filterButtonActive : styles.filterButton}
           onPress={() => setFilter('Từ chối')}
@@ -380,9 +388,7 @@ const styles = StyleSheet.create({
   },
   processingStatus: {
     color: '#FFA500',
-   
   },
-  
   reorderButton: {
     paddingVertical: 5,
     paddingHorizontal: 15,

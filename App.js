@@ -28,6 +28,7 @@ import SpendingScreen from './src/Spending/SpendingScreen';
 import OrderDetailScreen from './src/OrderDetail/OrderDetailScreen';
 import ReturnRequestScreen from './src/OrderDetail/ReturnRequestScreen';
 import CategoryScreen from './src/Product/CategoryScreen';
+import HomeScreenTest from './src/Page/HomeTest';
 
 
 
@@ -62,6 +63,7 @@ export default function App() {
        <Stack.Screen name="OrderDetailScreen" options={{headerShown: false}}  component={OrderDetailScreen} />
        <Stack.Screen name="ReturnRequestScreen" options={{headerShown: false}}  component={ReturnRequestScreen} />
        <Stack.Screen name="CategoryScreen" options={{headerShown: false}}  component={CategoryScreen} />
+       <Stack.Screen name="HomeScreenTest" options={{headerShown: false}}  component={HomeScreenTest} />
        <Stack.Screen name='HomePage' options={{ headerShown: false }}>
           {() => (
             <RequireAuth>

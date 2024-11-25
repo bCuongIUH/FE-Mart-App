@@ -137,7 +137,7 @@ export default function HomeScreen() {
   };
 
   const handleProductCart = (product) => {
-    navigation.navigate('ProductCart', { product });
+    navigation.navigate('HomeScreenTest', { product });
   };
 
   const renderItem = ({ item }) => (
