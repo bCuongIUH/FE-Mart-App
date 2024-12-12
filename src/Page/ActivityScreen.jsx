@@ -85,6 +85,7 @@ export default function ActivityScreen(route) {
   const navigation = useNavigation();
   const flatListRef = useRef(null);
   const [products, setProducts] = useState([]);
+console.log(bills);
 
   const fetchCustomer = useCallback(async () => {
     try {

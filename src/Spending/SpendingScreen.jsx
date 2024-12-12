@@ -5,7 +5,7 @@ import { BarChart } from 'react-native-chart-kit';
 import { Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { AuthContext } from '../untills/context/AuthContext';
-import { getAllCustomers, getOnlineBills } from '../untills/api';
+import { getAllCustomers, getOnlineBillsTK } from '../untills/api';
 
 export default function SpendingScreen() {
   const navigation = useNavigation();
@@ -39,7 +39,7 @@ export default function SpendingScreen() {
   const fetchBills = async () => {
     if (!customer?._id) return;
     try {
-      const allBills = await getOnlineBills();
+      const allBills = await getOnlineBillsTK();
  
       const customerBills = allBills.filter(bill => bill.customer && bill.customer._id.toString() === customer._id.toString());
   

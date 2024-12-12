@@ -6,7 +6,7 @@ const PaymentMethodScreen = ({ navigation, route }) => {
   const { onSelectPaymentMethod } = route.params; // Nhận hàm callback từ params
 
   const walletOptions = [
-    { name: 'VN pay', icon: 'money', color: '#ff0066' },
+    // { name: 'VN pay', icon: 'money', color: '#ff0066' },
   ];
 
   const otherPaymentOptions = [

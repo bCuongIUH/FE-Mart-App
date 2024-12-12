@@ -214,6 +214,16 @@ export const createBill = async (data) => {
   }
 };
 // API để lấy danh sách hóa đơn online
+export const getOnlineBillsTK = async () => {
+  try {
+    const config = await getConfig();
+    const response = await axios.get(`${API_URL}/bill/onlineTK`, config); 
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy hóa đơn mua trực tuyến:', error);
+    throw error;
+  }
+};
 export const getOnlineBills = async () => {
   try {
     const config = await getConfig();

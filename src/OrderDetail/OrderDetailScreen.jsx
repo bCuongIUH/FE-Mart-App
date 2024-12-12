@@ -24,6 +24,7 @@ export default function OrderDetailScreen({ route, navigation }) {
       console.error("Error fetching data:", err);
     }
   };
+// console.log(bill);
 
   useFocusEffect(
     useCallback(() => {
@@ -93,15 +94,6 @@ export default function OrderDetailScreen({ route, navigation }) {
               </View>
             </>
           )}
-          {bill.status === 'Hoàn trả' && (
-            <>
-              <Text style={styles.statusTitle}>Đơn hàng của bạn đã hoàn trả</Text>
-              <Text style={styles.statusMessage}>Xin lỗi vì sự bất tiện này!</Text>
-              <View style={styles.statusIconContainer}>
-                <MaterialIcons name="check-circle" size={50} color="#FF8C00" />
-              </View>
-            </>
-          )}
           {bill.status === 'Đang xử lý' && (
             <>
               <Text style={styles.statusTitle}>Đơn hàng của bạn đang xử lý</Text>
@@ -126,6 +118,15 @@ export default function OrderDetailScreen({ route, navigation }) {
               <Text style={styles.statusMessage}>Xin lỗi vì sự bất tiện này!</Text>
               <View style={styles.statusIconContainer}>
                 <MaterialIcons name="error" size={50} color="#FF4C4C" />
+              </View>
+            </>
+          )}
+                {bill.status === 'Hoàn trả' && (
+            <>
+              <Text style={styles.statusTitle}>Đơn hàng của bạn đã hoàn trả</Text>
+              <Text style={styles.statusMessage}>Xin lỗi vì sự bất tiện này!</Text>
+              <View style={styles.statusIconContainer}>
+                <MaterialIcons name="check-circle" size={50} color="#FF8C00" />
               </View>
             </>
           )}

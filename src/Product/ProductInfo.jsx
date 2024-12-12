@@ -82,7 +82,7 @@ export default function ProductInfo({ route, navigation }) {
       const response = await addToCart(customerId, productId, quantity, unit, price);
   
       Alert.alert("Thành công", "Sản phẩm đã được thêm vào giỏ hàng.");
-      navigation.navigate('CartScreen');
+      // navigation.navigate('CartScreen');
     } catch (error) {
       console.error("Lỗi khi thêm sản phẩm vào giỏ hàng:", error);
       Alert.alert("Lỗi", "Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.");
